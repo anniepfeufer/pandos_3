@@ -106,12 +106,20 @@ typedef struct context_t
 	unsigned int c_pc;		 /* Program Counter */
 } context_t;
 
+/* Page Table Entry */
+typedef struct
+{
+	unsigned int entryHi;
+	unsigned int entryLo;
+} pageTableEntry_t;
+
 /* Support Structure */
 typedef struct support_t
 {
 	int sup_asid;					/* Process ID (ASID) */
 	state_t sup_exceptState[2];		/* Stored exception states */
 	context_t sup_exceptContext[2]; /* Pass up contexts */
+	pageTableEntry_t sup_pageTable[PAGE_TABLE_SIZE]; /* U-proc Page Table */
 } support_t;
 
 /* Process Control Block Type */
@@ -146,8 +154,13 @@ typedef struct semd_t
 	pcb_t *s_procQ;		   /* Tail pointer to a process queue */
 } semd_t;
 
-/* Exception Type Constants */
-#define PGFAULTEXCEPT 0 /* Page Fault Exception */
-#define GENERALEXCEPT 1 /* General Exception */
+
+/* Swap Pool Entry: Maps a frame to a process and VPN */
+typedef struct
+{
+	int asid;	  // Process ID (ASID)
+	int vpn;	  // Virtual Page Number
+	int occupied; // Whether the slot is in use
+} swapPoolEntry_t;
 
 #endif
