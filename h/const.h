@@ -116,6 +116,11 @@
 #define GETCPUTIME 6
 #define WAITCLOCK 7
 #define GETSUPPORTPTR 8
+#define TERMINATE          9
+#define GETTOD             10
+#define WRITEPRINTER       11
+#define WRITETERMINAL      12
+#define READTERMINAL       13
 
 #define PAGE_TABLE_SIZE 32
 #define SWAP_POOL_SIZE (2 * UPROCMAX)
