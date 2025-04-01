@@ -143,7 +143,7 @@ void pagerHandler()
         writePageToBackingStore(victimASID, victimVPN, frameIndex);
     }
 
-    /* Step 9: Load new page */
+    /* Step 9: Load new page from backing store */
     loadPageFromBackingStore(asid, vpn, frameIndex);
 
     /* Step 10: Update Swap Pool */
