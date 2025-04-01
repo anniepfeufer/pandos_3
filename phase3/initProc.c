@@ -19,7 +19,7 @@
 #include "../h/vmSupport.h"
 #include "../h/sysSupport.h"
 
-pcb_PTR asidProcessTable[UPROCMAX + 1]; 
+pcb_PTR asidProcessTable[UPROCMAX + 1]; /* Index 1 to 8; index 0 unused */
 
 void initPageTable(support_t *supportStruct)
 {
