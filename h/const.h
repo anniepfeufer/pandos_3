@@ -122,11 +122,11 @@
 #define WRITETERMINAL      12
 #define READTERMINAL       13
 
-#define PAGE_TABLE_SIZE 32
-#define SWAP_POOL_SIZE (2 * UPROCMAX)
+#define PAGE_TABLE_SIZE 32 
+#define SWAP_POOL_SIZE (2 * UPROCMAX) 
 
-#define UPROCMAX 8
-#define VPNSHIFT 12
+#define UPROCMAX 8 
+#define VPNSHIFT 12 /* Shift to get VPN from EntryLo */
 
 #define VPN_BASE 0x80000000 /* Base for text/data VPNs */
 #define STACK_PAGE_INDEX 31
