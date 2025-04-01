@@ -5,6 +5,7 @@
 #include "../h/pcb.h"
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
+#include "../h/initProc.h"
 
 /* Global Swap Pool Table */
 swapPoolEntry_t swapPool[SWAP_POOL_SIZE];
@@ -42,14 +43,14 @@ void uTLB_RefillHandler()
 }
 
 /* Initialize the Swap Pool Table */
-    void initSwapPool()
+void initSwapPool()
+{
+    for (int i = 0; i < SWAP_POOL_SIZE; i++)
     {
-        for (int i = 0; i < SWAP_POOL_SIZE; i++)
-        {
-            swapPool[i].occupied = 0;
-            swapPool[i].asid = -1;
-            swapPool[i].vpn = -1;
-        }
+        swapPool[i].occupied = 0;
+        swapPool[i].asid = -1;
+        swapPool[i].vpn = -1;
+    }
 }
 
 /* Find a free frame in the swap pool, returns index or -1 if full */
@@ -92,47 +93,64 @@ void pagerHandler()
     support_t *supportStruct = currentProcess->p_supportStruct;
     int asid = supportStruct->sup_asid;
 
-    while (TRUE)
+    /* Step 1: Get exception state */
+    state_t *exceptionState = &supportStruct->sup_exceptState[PGFAULTEXCEPT];
+
+    /* Step 2: Determine cause */
+    unsigned int cause = exceptionState->s_cause & MAPMASK;
+    if (cause == EXC_MOD)
     {
-        /* Wait for a page fault exception */
-        STST(&(supportStruct->sup_exceptState[PGFAULTEXCEPT]));
-        int badVAddr = supportStruct->sup_exceptState[PGFAULTEXCEPT].s_entryHI;
-        int vpn = (badVAddr & 0xFFFFF000) >> 12;
-
-        /* Handle the page fault */
-        handlePageFault(asid, vpn);
+        /* TLB Modification exceptions should not occur */
+        SYSCALL(TERMINATEPROCESS, (int)currentProcess, 0, 0);
     }
-}
 
-/* Handle the page fault logic */
-void handlePageFault(int asid, int vpn)
-{
-    int frameIndex;
-
+    /* Step 4: Gain mutual exclusion over swap pool */
     SYSCALL(PASSEREN, (int)&swapPoolSem, 0, 0);
 
-    /* Try to find a free frame */
-    frameIndex = getFreeFrame();
-    if (frameIndex == -1)
+    /* Step 5: Determine missing VPN */
+    unsigned int entryHi = exceptionState->s_entryHI;
+    int vpn = (entryHi & VPN_MASK) >> VPNSHIFT;
+
+    /* Step 6: Pick a frame */
+    int frameIndex = getFreeFrame();
+    if (frameIndex == -1) /* No free frame available */
     {
-        /* No free frame, pick one to evict (naive replacement) */
-        frameIndex = 0; /* Simple strategy: evict first occupied frame */
+        frameIndex = 0; /* No free frame, use the first one in the swap pool */
         int victimASID = swapPool[frameIndex].asid;
         int victimVPN = swapPool[frameIndex].vpn;
 
-        /* Write back the evicted page */
+        /* Step 8: Evict page from victim process */
+        support_t *victimSupport = getSupportStruct(victimASID);
+        pageTableEntry_t *victimPTE = victimSupport->sup_pageTable;
+
+        victimPTE[victimVPN].entryLo &= ~ENTRYLO_VALID; /* Invalidate the entry in the TLB */
+        TLBCLR();                                       /* Clear the TLB */
+
         writePageToBackingStore(victimASID, victimVPN, frameIndex);
     }
 
-    /* Load the needed page */
+    /* Step 9: Load new page */
     loadPageFromBackingStore(asid, vpn, frameIndex);
 
-    /* Update swap pool entry */
+    /* Step 10: Update Swap Pool */
     swapPool[frameIndex].asid = asid;
     swapPool[frameIndex].vpn = vpn;
     swapPool[frameIndex].occupied = 1;
 
+    /* Step 11: Update Page Table */
+    pageTableEntry_t *pte = &supportStruct->sup_pageTable[vpn];
+    pte->entryLo = (frameIndex << VPNSHIFT) | ENTRYLO_VALID | ENTRYLO_DIRTY;
+
+    /* Step 12: Refresh TLB */
+    setENTRYHI(pte->entryHi);
+    setENTRYLO(pte->entryLo);
+    TLBWR();
+
+    /* Step 13: Release semaphore */
     SYSCALL(VERHOGEN, (int)&swapPoolSem, 0, 0);
+
+    /* Step 14: Return to process */
+    LDST(exceptionState);
 }
 
 void loadPageFromBackingStore(int asid, int vpn, int frame)
@@ -143,4 +161,9 @@ void loadPageFromBackingStore(int asid, int vpn, int frame)
 void writePageToBackingStore(int asid, int vpn, int frame)
 {
     /* Logic to write a page from frame to backing store */
+}
+
+support_t *getSupportStruct(int asid)
+{
+    return asidProcessTable[asid]->p_supportStruct;
 }

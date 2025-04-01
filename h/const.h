@@ -123,8 +123,6 @@
 #define UPROCMAX 8
 #define VPNSHIFT 12
 
-#define PAGE_SIZE 0x1000 /* 4KB */
-
 #define VPN_BASE 0x80000000 /* Base for text/data VPNs */
 #define STACK_PAGE_INDEX 31
 #define STACK_PAGE_VPN 0xBFFFF000 /* Top of kuseg for SP */
@@ -136,5 +134,9 @@
 
 #define ASID_SHIFT 6        /* ASID bits [11:6] in EntryHi */
 #define VPN_MASK 0xFFFFF000 /* Top 20 bits for VPN */
+
+#define EXC_MOD 1  /* TLB Modification Exception */
+#define EXC_TLBL 2 /* TLB Invalid (Load/Instruction fetch) */
+#define EXC_TLBS 3 /* TLB Invalid (Store) */
 
 #endif

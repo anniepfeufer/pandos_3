@@ -31,4 +31,6 @@ void loadPageFromBackingStore(int asid, int vpn, int frame);
 /* Writes a page to backing store from the specified frame */
 void writePageToBackingStore(int asid, int vpn, int frame);
 
+support_t *getSupportStruct(int asid);
+
 #endif 

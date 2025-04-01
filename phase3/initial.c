@@ -15,6 +15,8 @@
 #include "../h/interrupts.h"
 #include "../h/types.h"
 #include "../h/const.h"
+#include "../h/initProc.h"
+#include "../h/vmSupport.h"
 
 /* Global Variables */
 int processCount = 0;                        /* Active process count */
@@ -68,6 +70,9 @@ void main()
 
     /* Load the Interval Timer with 100 milliseconds */
     LDIT(CLOCKINTERVAL);
+
+    /* Initialize U-procs */
+    initUProcs();
 
     /* Create Initial Process */
     createProcess();
