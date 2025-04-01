@@ -22,9 +22,6 @@ void freeFrame(int frameIndex);
 /* Returns the frame index where a page is currently loaded, or -1 if not found */
 int findFrame(int asid, int vpn);
 
-/* Handles a page fault by loading the page into memory */
-void handlePageFault(int asid, int vpn);
-
 /* Loads a page from backing store into the specified frame */
 void loadPageFromBackingStore(int asid, int vpn, int frame);
 
