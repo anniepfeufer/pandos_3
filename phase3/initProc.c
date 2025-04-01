@@ -1,3 +1,16 @@
+
+/************************** initProc.c ******************************
+ *
+ * WRITTEN BY HARRIS AND ANNIE
+ *
+ * Initializes up to 8 user processes and the data structures for these
+ * processes to map to the swap pool. It calls initvmSupport to set up
+ * the swap pool table and semaphore, itinitializes the page table,
+ * pass up or die fields, and initial state for each process before calling
+ * SYS1 to create process. 
+ *
+ ***************************************************************/
+
 #include "../h/const.h"
 #include "../h/types.h"
 #include "../h/pcb.h"

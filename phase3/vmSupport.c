@@ -1,3 +1,17 @@
+
+/************************** vmSupport.c ******************************
+ * 
+ * WRITTEN BY HARRIS AND ANNIE
+ *
+ * This file handles virtual memory support. It takes care of TLB
+ * refill events, page faults (TLB invalid), and TLB modification
+ * exceptions. This file takes care of updating the TLB, and 
+ * page tables of each user proc, and replacing a page in the 
+ * swap pool if needed. This file also initializes the swap pool
+ * data structure and semaphore.
+ *
+ ***************************************************************/
+
 #include "../h/vmSupport.h"
 #include "../h/initial.h"
 #include "../h/types.h"
