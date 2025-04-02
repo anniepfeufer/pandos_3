@@ -116,16 +116,16 @@
 #define GETCPUTIME 6
 #define WAITCLOCK 7
 #define GETSUPPORTPTR 8
-#define TERMINATE          9
-#define GETTOD             10
-#define WRITEPRINTER       11
-#define WRITETERMINAL      12
-#define READTERMINAL       13
+#define TERMINATE 9
+#define GETTOD 10
+#define WRITEPRINTER 11
+#define WRITETERMINAL 12
+#define READTERMINAL 13
 
-#define PAGE_TABLE_SIZE 32 
-#define SWAP_POOL_SIZE (2 * UPROCMAX) 
+#define PAGE_TABLE_SIZE 32
+#define SWAP_POOL_SIZE (2 * UPROCMAX)
 
-#define UPROCMAX 8 
+#define UPROCMAX 8
 #define VPNSHIFT 12 /* Shift to get VPN from EntryLo */
 
 #define VPN_BASE 0x80000000 /* Base for text/data VPNs */
@@ -143,5 +143,11 @@
 #define EXC_MOD 1  /* TLB Modification Exception */
 #define EXC_TLBL 2 /* TLB Invalid (Load/Instruction fetch) */
 #define EXC_TLBS 3 /* TLB Invalid (Store) */
+
+#define READBLK 2
+#define WRITEBLK 3
+#define FLASH_BASE 0x10000050 /* base of flash devices */
+#define FLASH_SIZE 0x10       /* each device has 16 bytes of registers */
+#define COMMAND_SHIFT 8
 
 #endif

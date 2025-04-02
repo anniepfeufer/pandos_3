@@ -16,6 +16,8 @@ void pagerHandler();
 /* Gets the index of a free frame in the swap pool */
 int getFreeFrame();
 
+int pickVictimFrame();
+
 /* Frees a previously used frame in the swap pool */
 void freeFrame(int frameIndex);
 

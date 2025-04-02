@@ -1,12 +1,12 @@
 
 /************************** vmSupport.c ******************************
- * 
+ *
  * WRITTEN BY HARRIS AND ANNIE
  *
  * This file handles virtual memory support. It takes care of TLB
  * refill events, page faults (TLB invalid), and TLB modification
- * exceptions. This file takes care of updating the TLB, and 
- * page tables of each user proc, and replacing a page in the 
+ * exceptions. This file takes care of updating the TLB, and
+ * page tables of each user proc, and replacing a page in the
  * swap pool if needed. This file also initializes the swap pool
  * data structure and semaphore.
  *
@@ -24,6 +24,7 @@
 /* Global Swap Pool Table */
 swapPoolEntry_t swapPool[SWAP_POOL_SIZE];
 int swapPoolSem = 1;
+static int swapIndex = 0;
 
 void uTLB_RefillHandler()
 {
@@ -80,6 +81,13 @@ int getFreeFrame()
     return -1;
 }
 
+int pickVictimFrame()
+{
+    int victim = swapIndex;
+    swapIndex = (swapIndex + 1) % SWAP_POOL_SIZE;
+    return victim;
+}
+
 /* Free an occupied frame */
 void freeFrame(int frameIndex)
 {
@@ -129,16 +137,20 @@ void pagerHandler()
     int frameIndex = getFreeFrame();
     if (frameIndex == -1) /* No free frame available */
     {
+        frameIndex = pickVictimFrame();
         frameIndex = 0; /* No free frame, use the first one in the swap pool */
         int victimASID = swapPool[frameIndex].asid;
         int victimVPN = swapPool[frameIndex].vpn;
 
         /* Step 8: Evict page from victim process */
+        setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
+
         support_t *victimSupport = getSupportStruct(victimASID);
         pageTableEntry_t *victimPTE = victimSupport->sup_pageTable;
 
         victimPTE[victimVPN].entryLo &= ~ENTRYLO_VALID; /* Invalidate the entry in the TLB */
         TLBCLR();                                       /* Clear the TLB */
+        setSTATUS(getSTATUS());                         /* Re-enable interrupts */
 
         writePageToBackingStore(victimASID, victimVPN, frameIndex);
     }
@@ -152,6 +164,8 @@ void pagerHandler()
     swapPool[frameIndex].occupied = 1;
 
     /* Step 11: Update Page Table */
+    setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
+
     pageTableEntry_t *pte = &supportStruct->sup_pageTable[vpn];
     pte->entryLo = (frameIndex << VPNSHIFT) | ENTRYLO_VALID | ENTRYLO_DIRTY;
 
@@ -159,6 +173,8 @@ void pagerHandler()
     setENTRYHI(pte->entryHi);
     setENTRYLO(pte->entryLo);
     TLBWR();
+
+    setSTATUS(getSTATUS()); /* Re-enable interrupts */
 
     /* Step 13: Release semaphore */
     SYSCALL(VERHOGEN, (int)&swapPoolSem, 0, 0);
@@ -169,12 +185,42 @@ void pagerHandler()
 
 void loadPageFromBackingStore(int asid, int vpn, int frame)
 {
-    /* Logic to read a page from backing store into frame */
+    device_t *flashDev = (device_t *)(FLASH_BASE + (asid - 1) * FLASH_SIZE);
+
+    /* Set RAM target for flash read */
+    flashDev->d_data0 = (memaddr)(RAMSTART + (frame * PAGESIZE));
+
+    /* Atomically issue read command */
+    setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
+    flashDev->d_command = (vpn << COMMAND_SHIFT) | READBLK;
+    SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
+    setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
+
+    /* Check device status */
+    if (flashDev->d_status != 1) /* 1 = Device Ready */
+    {
+        PANIC(); /* Handle as trap */
+    }
 }
 
 void writePageToBackingStore(int asid, int vpn, int frame)
 {
-    /* Logic to write a page from frame to backing store */
+    device_t *flashDev = (device_t *)(FLASH_BASE + (asid - 1) * FLASH_SIZE);
+
+    // Set RAM source for flash write
+    flashDev->d_data0 = (memaddr)(RAMSTART + (frame * PAGESIZE));
+
+    /* Atomically issue write command */
+    setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
+    flashDev->d_command = (vpn << COMMAND_SHIFT) | WRITEBLK;
+    SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
+    setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
+
+    /* Check device status */
+    if (flashDev->d_status != 1) /* 1 = Device Ready */
+    {
+        PANIC(); /* Handle as trap */
+    }
 }
 
 support_t *getSupportStruct(int asid)
