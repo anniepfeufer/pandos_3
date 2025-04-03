@@ -6,8 +6,8 @@
 extern pcb_PTR asidProcessTable[UPROCMAX + 1]; /* Index 1 to 8; index 0 unused */
 
 /* Initializes the Page Table for a given U-proc */
-void initPageTable(support_t *supportStruct);
+extern void initPageTable(support_t *supportStruct);
 
-void initUProcs();
+extern void initUProcs();
 
 #endif 
