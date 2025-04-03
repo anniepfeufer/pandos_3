@@ -20,6 +20,7 @@
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
 #include "../h/initProc.h"
+#include "../h/sysSupport.h"
 
 /* Global Swap Pool Table */
 swapPoolEntry_t swapPool[SWAP_POOL_SIZE];
@@ -138,7 +139,6 @@ void pagerHandler()
     if (frameIndex == -1) /* No free frame available */
     {
         frameIndex = pickVictimFrame();
-        frameIndex = 0; /* No free frame, use the first one in the swap pool */
         int victimASID = swapPool[frameIndex].asid;
         int victimVPN = swapPool[frameIndex].vpn;
 
@@ -207,7 +207,7 @@ void writePageToBackingStore(int asid, int vpn, int frame)
 {
     device_t *flashDev = (device_t *)(FLASH_BASE + (asid - 1) * FLASH_SIZE);
 
-    // Set RAM source for flash write
+    /* Set RAM source for flash write */
     flashDev->d_data0 = (memaddr)(RAMSTART + (frame * PAGESIZE));
 
     /* Atomically issue write command */

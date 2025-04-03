@@ -2,7 +2,7 @@
 #define SYSSUPPORT_H
 
 #include "../h/types.h"
-
+ 
 /* handles all passed-up, nonTLB exceptions */
 extern void supportGenExceptionHandler();
 

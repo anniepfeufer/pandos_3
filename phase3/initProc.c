@@ -35,7 +35,7 @@ void initPageTable(support_t *supportStruct)
         }
         else
         {
-            vpn = VPN_BASE + (i * PAGE_SIZE);
+            vpn = VPN_BASE + (i * PAGESIZE);
         }
 
         /* EntryHi: [VPN | ASID in bits 11:6] */
