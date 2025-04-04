@@ -2,7 +2,11 @@
 #define SYSSUPPORT_H
 
 #include "../h/types.h"
- 
+
+extern int printerSem[8];
+extern int termReadSem[8];
+extern int termWriteSem[8];
+
 /* handles all passed-up, nonTLB exceptions */
 extern void supportGenExceptionHandler();
 

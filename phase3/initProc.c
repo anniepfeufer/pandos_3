@@ -56,9 +56,6 @@ void initUProcs()
             PANIC(); /* Failed to allocate process */
         }
 
-        insertProcQ(&readyQueue, newProc);
-        processCount++;
-
         /* Allocate and assign support struct */
         support_t *support = (support_t *)ALLOC();
         if (support == NULL)
@@ -72,18 +69,32 @@ void initUProcs()
         /* Initialize page table for the new U-proc */
         initPageTable(support);
 
-        /* Add to ASID table for lookup */
+        /* Add to ASID table for lookup by ASID */
         asidProcessTable[i] = newProc;
 
-        /* Set up context for the pagerHandler */
-        support->sup_exceptContext[PGFAULTEXCEPT].c_stackPtr = RAMTOP - (i * PAGESIZE);
+        /* ------------ Exception Contexts Setup ------------ */
+
+        /* TLB Refill (Exception Type 0) */
+        support->sup_exceptContext[PGFAULTEXCEPT].c_stackPtr = (memaddr) & (support->sup_stackTLB[499]);
         support->sup_exceptContext[PGFAULTEXCEPT].c_status = ALLOFF | IEPBITON | IM | TEBITON;
         support->sup_exceptContext[PGFAULTEXCEPT].c_pc = (memaddr)pagerHandler;
 
+        /* General Exception (Exception Type 1) */
+        support->sup_exceptContext[GENERALEXCEPT].c_stackPtr = (memaddr) & (support->sup_stackGen[499]);
+        support->sup_exceptContext[GENERALEXCEPT].c_status = ALLOFF | IEPBITON | IM | TEBITON;
+        support->sup_exceptContext[GENERALEXCEPT].c_pc = (memaddr)supportGenExceptionHandler;
+
         /* Set entry point and SP for the U-proc */
-        newProc->p_s.s_pc = (memaddr)test; /* test is entry point for the process */
-        newProc->p_s.s_t9 = (memaddr)test; /* For consistency with the PC */
-        newProc->p_s.s_sp = RAMTOP - (i * PAGESIZE);
-        newProc->p_s.s_status = ALLOFF | IEPBITON | IM | TEBITON;
+        newProc->p_s.s_pc = (memaddr)test;                        /* .text entry point */
+        newProc->p_s.s_t9 = (memaddr)test;                        /* consistency with PC */
+        newProc->p_s.s_sp = RAMTOP - (i * PAGESIZE);              /* unique stack */
+        newProc->p_s.s_status = ALLOFF | IEPBITON | IM | TEBITON; /* user mode with timer */
+
+        /* ------------ Launch U-proc using SYS1 ------------ */
+        int result = SYSCALL(CREATEPROCESS, (int)&(newProc->p_s), (int)support, 0);
+        if (result < 0)
+        {
+            PANIC(); /* SYS1 failed to create the U-proc */
+        }
     }
 }

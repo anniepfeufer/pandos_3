@@ -261,6 +261,9 @@ void supReadTerminal()
 /** 
  * terminates the calling u-proc
  */
-void supportProgTrapHandler(){
-    supTerminate()
+void supportProgTrapHandler()
+{
+    SYSCALL(VERHOGEN, (int)&swapPoolSem, 0, 0); /* release mutual exclusion if held */
+    supTerminate();                             /* orderly termination */
+    scheduler();                              
 }

@@ -17,6 +17,7 @@
 #include "../h/const.h"
 #include "../h/initProc.h"
 #include "../h/vmSupport.h"
+#include "../h/sysSupport.h"
 
 /* Global Variables */
 int processCount = 0;                        /* Active process count */
@@ -119,4 +120,27 @@ void createProcess()
     /* Insert into Ready Queue */
     insertProcQ(&readyQueue, p);
     processCount++; /* Increment process count */
+}
+
+void test()
+{
+    /* ---------- PHASE 3 INITIALIZATION ---------- */
+
+    /* Initialize Swap Pool */
+    initSwapPool();
+    swapPoolSem = 1;
+
+    /* Initialize I/O mutual exclusion semaphores */
+    for (int i = 0; i < 8; i++)
+    {
+        printerSem[i] = 1;
+        termReadSem[i] = 1;
+        termWriteSem[i] = 1;
+    }
+
+    /* Terminate the instantiator process */
+    SYSCALL(TERMINATEPROCESS, 0, 0, 0);
+
+    /* Should never return here */
+    PANIC();
 }

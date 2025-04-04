@@ -116,10 +116,12 @@ typedef struct
 /* Support Structure */
 typedef struct support_t
 {
-	int sup_asid;					/* Process ID (ASID) */
-	state_t sup_exceptState[2];		/* Stored exception states */
-	context_t sup_exceptContext[2]; /* Pass up contexts */
+	int sup_asid;									 /* Process ID (ASID) */
+	state_t sup_exceptState[2];						 /* Stored exception states */
+	context_t sup_exceptContext[2];					 /* Pass up contexts */
 	pageTableEntry_t sup_pageTable[PAGE_TABLE_SIZE]; /* U-proc Page Table */
+	int sup_stackTLB[500];							 /* TLB Refill exception stack */
+	int sup_stackGen[500];							 /* General exception stack */
 } support_t;
 
 /* Process Control Block Type */
@@ -153,7 +155,6 @@ typedef struct semd_t
 	int *s_semAdd;		   /* Pointer to the semaphore */
 	pcb_t *s_procQ;		   /* Tail pointer to a process queue */
 } semd_t;
-
 
 /* Swap Pool Entry: Maps a frame to a process and VPN */
 typedef struct
