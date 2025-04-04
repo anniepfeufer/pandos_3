@@ -257,3 +257,10 @@ void supReadTerminal()
         state->s_v0 = -status;
     }
 }
+
+/** 
+ * terminates the calling u-proc
+ */
+void supportProgTrapHandler(){
+    supTerminate()
+}
