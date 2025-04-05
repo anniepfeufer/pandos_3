@@ -41,8 +41,21 @@ void initPageTable(support_t *supportStruct)
         /* EntryHi: [VPN | ASID in bits 11:6] */
         supportStruct->sup_pageTable[i].entryHi = (vpn & VPN_MASK) | (asid << ASID_SHIFT);
 
-        /* EntryLo: D = 1, V = 0, G = 0 */
-        supportStruct->sup_pageTable[i].entryLo = ENTRYLO_DIRTY;
+        if (i == 0)
+        {
+            /* .text page: valid but read-only (no DIRTY) */
+            supportStruct->sup_pageTable[i].entryLo = ENTRYLO_VALID;
+        }
+        else if (i == 1)
+        {
+            /* .data page: valid and writable */
+            supportStruct->sup_pageTable[i].entryLo = ENTRYLO_VALID | ENTRYLO_DIRTY;
+        }
+        else
+        {
+            /* All other pages: initially invalid, writable if needed */
+            supportStruct->sup_pageTable[i].entryLo = ENTRYLO_DIRTY;
+        }
     }
 }
 
@@ -85,9 +98,9 @@ void initUProcs()
         support->sup_exceptContext[GENERALEXCEPT].c_pc = (memaddr)supportGenExceptionHandler;
 
         /* Set entry point and SP for the U-proc */
-        newProc->p_s.s_pc = (memaddr)test;                        /* .text entry point */
-        newProc->p_s.s_t9 = (memaddr)test;                        /* consistency with PC */
-        newProc->p_s.s_sp = RAMTOP - (i * PAGESIZE);              /* unique stack */
+        newProc->p_s.s_pc = UPROC_START;
+        newProc->p_s.s_t9 = UPROC_START;
+        newProc->p_s.s_sp = UPROC_STACK;
         newProc->p_s.s_status = ALLOFF | IEPBITON | IM | TEBITON; /* user mode with timer */
 
         /* ------------ Launch U-proc using SYS1 ------------ */

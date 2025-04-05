@@ -150,4 +150,11 @@
 #define FLASH_SIZE 0x10       /* each device has 16 bytes of registers */
 #define COMMAND_SHIFT 8
 
+#define UPROC_START 0x800000B0
+#define UPROC_STACK 0xC0000000
+#define MAX_LEN 128
+
+#define INDEX_P_BIT 0x80000000 // Bit 31: Probe failure (P bit)
+#define INDEX_MASK 0x0000003F  // Bits 0–5: TLB index mask
+
 #endif

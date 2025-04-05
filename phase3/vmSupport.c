@@ -147,10 +147,23 @@ void pagerHandler()
 
         support_t *victimSupport = getSupportStruct(victimASID);
         pageTableEntry_t *victimPTE = victimSupport->sup_pageTable;
+        pageTableEntry_t *victimEntry = &victimPTE[victimVPN];
 
-        victimPTE[victimVPN].entryLo &= ~ENTRYLO_VALID; /* Invalidate the entry in the TLB */
-        TLBCLR();                                       /* Clear the TLB */
-        setSTATUS(getSTATUS());                         /* Re-enable interrupts */
+        /* Invalidate the Page Table entry */
+        victimEntry->entryLo &= ~ENTRYLO_VALID;
+
+        /* Probe the TLB to check if entry is present */
+        setENTRYHI(victimEntry->entryHi);
+        TLBP();
+
+        cpu_t index = getINDEX();
+        if ((index & INDEX_P_BIT) == 0) /* TLB entry was found */
+        {
+            setINDEX(index & INDEX_MASK); /* Set correct index for TLBWI */
+            setENTRYLO(victimEntry->entryLo);
+            TLBWI(); /* Overwrite the entry in TLB */
+        }
+        setSTATUS(getSTATUS()); /* Re-enable interrupts */
 
         writePageToBackingStore(victimASID, victimVPN, frameIndex);
     }

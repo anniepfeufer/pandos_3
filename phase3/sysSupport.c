@@ -94,6 +94,14 @@ void supportSyscallHandler(state_t *exceptionState)
  */
 void supTerminate()
 {
+    /* Free all swap pool entries belonging to this process */
+    for (int i = 0; i < SWAP_POOL_SIZE; i++)
+    {
+        if (swapPool[i].occupied && swapPool[i].asid == currentProcess->p_supportStruct->sup_asid)
+        {
+            freeFrame(i);
+        }
+    }
     SYSCALL(TERMINATEPROCESS, 0, 0, 0);
 }
 
@@ -132,7 +140,7 @@ void supWriteToPrinter()
     int len = state->s_a2;
 
     /* Validate len and address range */
-    if (len < 0 || len > 128 || (unsigned int)virtAddr >= KUSEG)
+    if (len <= 0 || len > MAX_LEN || (unsigned int)virtAddr >= KUSEG)
     {
         supTerminate();
         scheduler();
@@ -177,7 +185,7 @@ void supWriteToTerminal()
     int len = state->s_a2;
 
     /* Validate len and address range */
-    if (len < 0 || len > 128 || (unsigned int)virtAddr >= KUSEG)
+    if (len <= 0 || len > MAX_LEN || (unsigned int)virtAddr >= KUSEG)
     {
         supTerminate();
         scheduler();
@@ -237,7 +245,7 @@ void supReadTerminal()
     if (status == 5)
     {
         int len = 0;
-        while (len < 128 && buffer[len] != '\n' && buffer[len] != '\0')
+        while (len < MAX_LEN && buffer[len] != '\n' && buffer[len] != '\0')
         {
             virtAddr[len] = buffer[len]; /* Copy to user space */
             len++;
