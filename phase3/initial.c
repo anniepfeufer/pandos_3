@@ -25,6 +25,7 @@ int softBlockCount = 0;                      /* Soft-blocked process count */
 pcb_t *readyQueue = NULL;                    /* Tail pointer to ready queue */
 pcb_t *currentProcess = NULL;                /* Currently running process */
 int deviceSemaphores[NUM_DEVICES + 1] = {0}; /* Device semaphores (extra one for pseudo-clock) */
+int masterSemaphore = 0;                     /* Global semaphore to wait for U-procs */
 
 /* Declaring the test function */
 extern void test();
@@ -72,8 +73,14 @@ void main()
     /* Load the Interval Timer with 100 milliseconds */
     LDIT(CLOCKINTERVAL);
 
+    /* Initialize support structures for U-procs */
+    initSupportStructs();
+
     /* Initialize U-procs */
     initUProcs();
+
+    /* Phase 3: Swap pool + device semaphores */
+    initPhase3Resources();
 
     /* Create Initial Process */
     createProcess();
@@ -124,23 +131,33 @@ void createProcess()
 
 void test()
 {
-    /* ---------- PHASE 3 INITIALIZATION ---------- */
+    /* PHASE 3: test() waits for all U-procs to terminate */
+    for (int i = 0; i < UPROCMAX; i++)
+    {
+        SYSCALL(PASSEREN, (int)&masterSemaphore, 0, 0); /* SYS3: wait for signal */
+    }
 
-    /* Initialize Swap Pool */
+    SYSCALL(TERMINATEPROCESS, 0, 0, 0); /* SYS2: all done */
+}
+
+void initPhase3Resources()
+{
     initSwapPool();
     swapPoolSem = 1;
 
-    /* Initialize I/O mutual exclusion semaphores */
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < UPROCMAX; i++)
     {
         printerSem[i] = 1;
         termReadSem[i] = 1;
         termWriteSem[i] = 1;
     }
+}
 
-    /* Terminate the instantiator process */
-    SYSCALL(TERMINATEPROCESS, 0, 0, 0);
-
-    /* Should never return here */
-    PANIC();
+void initSupportStructs()
+{
+    for (int i = 0; i < SUPPORT_STRUCT_POOL_SIZE; i++)
+    {
+        supportStructPool[i].sup_next = supportFreeList;
+        supportFreeList = &supportStructPool[i];
+    }
 }

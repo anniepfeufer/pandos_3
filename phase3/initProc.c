@@ -70,7 +70,7 @@ void initUProcs()
         }
 
         /* Allocate and assign support struct */
-        support_t *support = (support_t *)ALLOC();
+        support_t *support = allocSupportStruct();
         if (support == NULL)
         {
             PANIC(); /* Could not allocate support structure */
@@ -87,13 +87,16 @@ void initUProcs()
 
         /* ------------ Exception Contexts Setup ------------ */
 
+        unsigned int tlbStack = RAMTOP - (2 * i - 1) * PAGESIZE;
+        unsigned int genStack = RAMTOP - (2 * i) * PAGESIZE;
+
         /* TLB Refill (Exception Type 0) */
-        support->sup_exceptContext[PGFAULTEXCEPT].c_stackPtr = (memaddr) & (support->sup_stackTLB[499]);
+        support->sup_exceptContext[PGFAULTEXCEPT].c_stackPtr = tlbStack;
         support->sup_exceptContext[PGFAULTEXCEPT].c_status = ALLOFF | IEPBITON | IM | TEBITON;
         support->sup_exceptContext[PGFAULTEXCEPT].c_pc = (memaddr)pagerHandler;
 
         /* General Exception (Exception Type 1) */
-        support->sup_exceptContext[GENERALEXCEPT].c_stackPtr = (memaddr) & (support->sup_stackGen[499]);
+        support->sup_exceptContext[GENERALEXCEPT].c_stackPtr = genStack;
         support->sup_exceptContext[GENERALEXCEPT].c_status = ALLOFF | IEPBITON | IM | TEBITON;
         support->sup_exceptContext[GENERALEXCEPT].c_pc = (memaddr)supportGenExceptionHandler;
 
@@ -110,4 +113,20 @@ void initUProcs()
             PANIC(); /* SYS1 failed to create the U-proc */
         }
     }
+}
+
+support_t *allocSupportStruct()
+{
+    if (supportFreeList == NULL)
+        return NULL;
+
+    support_t *allocated = supportFreeList;
+    supportFreeList = supportFreeList->sup_next;
+    return allocated;
+}
+
+void freeSupportStruct(support_t *s)
+{
+    s->sup_next = supportFreeList;
+    supportFreeList = s;
 }

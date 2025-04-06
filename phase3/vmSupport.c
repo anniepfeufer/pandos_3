@@ -23,7 +23,7 @@
 #include "../h/sysSupport.h"
 
 /* Global Swap Pool Table */
-swapPoolEntry_t swapPool[SWAP_POOL_SIZE];
+swapPoolEntry_t swapPool[SWAP_POOL_SIZE]; /* Swap Pool: Allocated in kernel memory (after user .text/.data) */
 int swapPoolSem = 1;
 static int swapIndex = 0;
 

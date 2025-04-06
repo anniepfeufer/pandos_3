@@ -22,6 +22,7 @@ extern int softBlockCount;
 extern pcb_PTR readyQueue;               
 extern pcb_PTR currentProcess;
 extern int deviceSemaphores[NUM_DEVICES + 1];
+extern int masterSemaphore;
 
 /* Function Prototypes */
 extern void main();

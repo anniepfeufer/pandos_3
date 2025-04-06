@@ -102,6 +102,8 @@ void supTerminate()
             freeFrame(i);
         }
     }
+    SYSCALL(VERHOGEN, (int)&masterSemaphore, 0, 0); /* SYS4: V(masterSemaphore) */
+    freeSupportStruct(currentProcess->p_supportStruct); /* Free the support structure */
     SYSCALL(TERMINATEPROCESS, 0, 0, 0);
 }
 

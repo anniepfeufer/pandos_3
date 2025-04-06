@@ -120,8 +120,7 @@ typedef struct support_t
 	state_t sup_exceptState[2];						 /* Stored exception states */
 	context_t sup_exceptContext[2];					 /* Pass up contexts */
 	pageTableEntry_t sup_pageTable[PAGE_TABLE_SIZE]; /* U-proc Page Table */
-	int sup_stackTLB[500];							 /* TLB Refill exception stack */
-	int sup_stackGen[500];							 /* General exception stack */
+	struct support_t *sup_next;						 /* Pointer to next support structure in linked list */
 } support_t;
 
 /* Process Control Block Type */
