@@ -51,7 +51,6 @@ void supportGenExceptionHandler()
     default:
         /* Undefined exception, terminate the process */
         supTerminate();
-        scheduler();
     }
 }
 
@@ -84,7 +83,6 @@ void supportSyscallHandler(state_t *exceptionState)
     default:
         /* Invalid syscall, terminate the process */
         supTerminate();
-        scheduler();
     }
 }
 
