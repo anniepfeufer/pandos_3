@@ -45,6 +45,7 @@
 #define IPSHIFT 8         /* IP bits start at bit 8 */
 #define RESVINSTR 10      /* Reserved Instruction (RI) Exception Code */
 #define CAUSEINTOFFS 10   /* ExcCode field starts at bit 10 */
+#define STATUS_MASK 0xFF  /* For device status low byte */
 
 /* device interrupts */
 #define DISKINT 3
@@ -157,5 +158,15 @@
 
 #define INDEX_P_BIT 0x80000000 /* Bit 31: Probe failure (P bit) */
 #define INDEX_MASK 0x0000003F  /* Bits 0–5: TLB index mask */
+
+#define PRINTCHR 2
+#define TRANSMITCHAR 2
+#define RECEIVECHAR 2
+#define TRANSMIT 1
+#define RECEIVE 0
+#define IL_PRINTER (PRNTINT - 3)
+#define IL_TERMINAL (TERMINT - 3)
+
+
 
 #endif

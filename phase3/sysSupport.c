@@ -103,7 +103,7 @@ void supTerminate()
             freeFrame(i);
         }
     }
-    SYSCALL(VERHOGEN, (int)&masterSemaphore, 0, 0); /* SYS4: V(masterSemaphore) */
+    SYSCALL(VERHOGEN, (int)&masterSemaphore, 0, 0);     /* SYS4: V(masterSemaphore) */
     freeSupportStruct(currentProcess->p_supportStruct); /* Free the support structure */
     SYSCALL(TERMINATEPROCESS, 0, 0, 0);
 }
@@ -143,28 +143,50 @@ void supWriteToPrinter()
     int len = state->s_a2;
 
     /* Validate len and address range */
-    if (len <= 0 || len > MAX_LEN || (unsigned int)virtAddr >= KUSEG)
+    if (len <= 0 || len > MAX_LEN || (memaddr)virtAddr < KUSEG)
     {
         supTerminate();
-        scheduler();
     }
 
-    /* Translate ASID to printer line number (line = asid - 1) */
-    int lineNum = support->sup_asid - 1;
-    /* Prepare buffer to hold the string */
-    char buffer[129]; /* +1 for null terminator */
+    int asid = support->sup_asid;
+    int lineNum = asid - 1; /* Translate ASID to printer line number (line = asid - 1) */
+    device_t *printer = (device_t *)(DEV_REG_ADDR(IL_PRINTER, lineNum));
 
-    int i;
-    for (i = 0; i < len; i++)
+    /* Copy string into local buffer */
+    char buffer[129]; /* +1 for null terminator */
+    for (int i = 0; i < len; i++)
     {
         buffer[i] = virtAddr[i]; /* Read from U-proc’s memory */
     }
     buffer[len] = '\0';
 
-    /* Send to printer using kernel syscall */
-    int status = SYSCALL(WRITEPRINTER, (int)buffer, len, lineNum);
+    int charsPrinted = 0;
 
-    state->s_v0 = (status == 1) ? len : -status;
+    /* Mutual exclusion */
+    SYSCALL(PASSEREN, (int)&printerSem[lineNum], 0, 0);
+
+    for (int i = 0; i < len; i++)
+    {
+        printer->d_data0 = buffer[i];
+
+        /* Atomically COMMAND + SYS5 */
+        setSTATUS(getSTATUS() & ~IECON); /* disable interrupts */
+        printer->d_command = PRINTCHR;
+        SYSCALL(WAITIO, PRNTINT, lineNum, 0);
+        setSTATUS(getSTATUS() | IECON); /* re-enable interrupts */
+
+        /* Check for success: status should be 1 (Device Ready) */
+        if ((printer->d_status & STATUS_MASK) != 1)
+        {
+            break; /* stop if error occurs */
+        }
+
+        charsPrinted++;
+    }
+
+    SYSCALL(VERHOGEN, (int)&printerSem[lineNum], 0, 0);
+
+    state->s_v0 = charsPrinted;
 }
 
 /**
@@ -189,28 +211,44 @@ void supWriteToTerminal()
     int len = state->s_a2;
 
     /* Validate len and address range */
-    if (len <= 0 || len > MAX_LEN || (unsigned int)virtAddr >= KUSEG)
+    if (len <= 0 || len > MAX_LEN || (memaddr)virtAddr < KUSEG)
     {
         supTerminate();
-        scheduler();
     }
 
-    /* Translate ASID to printer line number (line = asid - 1) */
-    int lineNum = support->sup_asid - 1;
-    /* Prepare buffer to hold the string */
-    char buffer[129]; /* +1 for null terminator */
+    int asid = support->sup_asid;
+    int lineNum = asid - 1;
+    device_t *terminal = DEV_REG_ADDR(IL_TERMINAL, lineNum);
 
-    int i;
-    for (i = 0; i < len; i++)
+    char buffer[129];
+    for (int i = 0; i < len; i++)
     {
-        buffer[i] = virtAddr[i]; /* Read from U-proc’s memory */
+        buffer[i] = virtAddr[i];
     }
     buffer[len] = '\0';
 
-    /* Send to printer using kernel syscall */
-    int status = SYSCALL(WRITETERMINAL, (int)buffer, len, lineNum);
+    SYSCALL(PASSEREN, (int)&termWriteSem[lineNum], 0, 0);
 
-    state->s_v0 = (status == 5) ? len : -status;
+    int sent = 0;
+    for (int i = 0; i < len; i++)
+    {
+        terminal->t_transm_status = (buffer[i] << 8); /* char in upper byte */
+
+        setSTATUS(getSTATUS() & ~IECON);             
+        terminal->t_transm_command = TRANSMITCHAR;   
+        SYSCALL(WAITIO, TERMINT, lineNum, TRANSMIT);
+        setSTATUS(getSTATUS() | IECON);             
+
+        if ((terminal->t_transm_status & STATUS_MASK) != 5)
+        {
+            break;
+        }
+
+        sent++;
+    }
+
+    SYSCALL(VERHOGEN, (int)&termWriteSem[lineNum], 0, 0);
+    state->s_v0 = sent;
 }
 
 /**
@@ -233,50 +271,51 @@ void supReadTerminal()
 
     char *virtAddr = (char *)state->s_a1;
 
-    /* Validate that virtAddr is in user space */
-    if ((unsigned int)virtAddr >= KUSEG)
+    if ((memaddr)virtAddr < KUSEG)
     {
         supTerminate();
-        scheduler();
     }
 
-    int lineNum = support->sup_asid - 1;
+    int asid = support->sup_asid;
+    int lineNum = asid - 1;
+    device_t *terminal = DEV_REG_ADDR(IL_TERMINAL, lineNum);
 
-    char buffer[129]; /* Terminal lines can have up to 128 chars (+1 for safety) */
+    char buffer[129];
+    int count = 0;
+    char ch;
 
-    /* Call kernel syscall to read from terminal */
-    int status = SYSCALL(READTERMINAL, (int)buffer, 128, lineNum);
+    SYSCALL(PASSEREN, (int)&termReadSem[lineNum], 0, 0);
 
-    if (status == 5)
+    do
     {
-        int len = 0;
-        while (len < MAX_LEN && buffer[len] != '\n' && buffer[len] != '\0')
-        {
-            virtAddr[len] = buffer[len]; /* Copy to user space */
-            len++;
-        }
+        setSTATUS(getSTATUS() & ~IECON);
+        terminal->t_recv_command = RECEIVECHAR;
+        SYSCALL(WAITIO, TERMINT, lineNum, RECEIVE);
+        setSTATUS(getSTATUS() | IECON);
 
-        /* Copy final newline/terminator if present */
-        if (buffer[len] == '\n' || buffer[len] == '\0')
-        {
-            virtAddr[len] = buffer[len];
-            len++;
-        }
+        ch = terminal->t_recv_status & STATUS_MASK;
 
-        state->s_v0 = len; /* Number of chars written into virtAddr */
-    }
-    else
+        buffer[count++] = ch;
+    } while (ch != '\n' && count < MAX_LEN);
+
+    buffer[count] = '\0'; /* null-terminate just in case */
+
+    for (int i = 0; i < count; i++)
     {
-        state->s_v0 = -status;
+        virtAddr[i] = buffer[i]; /* copy to user space */
     }
+
+    SYSCALL(VERHOGEN, (int)&termReadSem[lineNum], 0, 0);
+
+    state->s_v0 = count;
 }
 
-/** 
+/**
  * terminates the calling u-proc
  */
 void supportProgTrapHandler()
 {
     SYSCALL(VERHOGEN, (int)&swapPoolSem, 0, 0); /* release mutual exclusion if held */
     supTerminate();                             /* orderly termination */
-    scheduler();                              
+    scheduler();
 }
