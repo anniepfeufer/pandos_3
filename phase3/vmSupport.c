@@ -61,7 +61,8 @@ void uTLB_RefillHandler()
 /* Initialize the Swap Pool Table */
 void initSwapPool()
 {
-    for (int i = 0; i < SWAP_POOL_SIZE; i++)
+    int i;
+    for (i = 0; i < SWAP_POOL_SIZE; i++)
     {
         swapPool[i].occupied = 0;
         swapPool[i].asid = -1;
@@ -72,7 +73,8 @@ void initSwapPool()
 /* Find a free frame in the swap pool, returns index or -1 if full */
 int getFreeFrame()
 {
-    for (int i = 0; i < SWAP_POOL_SIZE; i++)
+    int i;
+    for (i = 0; i < SWAP_POOL_SIZE; i++)
     {
         if (!swapPool[i].occupied)
         {
@@ -100,7 +102,8 @@ void freeFrame(int frameIndex)
 /* Check if a frame exists for (asid, vpn) */
 int findFrame(int asid, int vpn)
 {
-    for (int i = 0; i < SWAP_POOL_SIZE; i++)
+    int i;
+    for (i = 0; i < SWAP_POOL_SIZE; i++)
     {
         if (swapPool[i].occupied && swapPool[i].asid == asid && swapPool[i].vpn == vpn)
         {

@@ -132,7 +132,8 @@ void createProcess()
 void test()
 {
     /* PHASE 3: test() waits for all U-procs to terminate */
-    for (int i = 0; i < UPROCMAX; i++)
+    int i;
+    for (i = 0; i < UPROCMAX; i++)
     {
         SYSCALL(PASSEREN, (int)&masterSemaphore, 0, 0); /* SYS3: wait for signal */
     }
@@ -145,7 +146,8 @@ void initPhase3Resources()
     initSwapPool();
     swapPoolSem = 1;
 
-    for (int i = 0; i < UPROCMAX; i++)
+    int i;
+    for (i = 0; i < UPROCMAX; i++)
     {
         printerSem[i] = 1;
         termReadSem[i] = 1;
@@ -155,7 +157,8 @@ void initPhase3Resources()
 
 void initSupportStructs()
 {
-    for (int i = 0; i < SUPPORT_STRUCT_POOL_SIZE; i++)
+    int i; 
+    for (i = 0; i < SUPPORT_STRUCT_POOL_SIZE; i++)
     {
         supportStructPool[i].sup_next = supportFreeList;
         supportFreeList = &supportStructPool[i];

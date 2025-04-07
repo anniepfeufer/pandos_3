@@ -158,9 +158,9 @@ typedef struct semd_t
 /* Swap Pool Entry: Maps a frame to a process and VPN */
 typedef struct
 {
-	int asid;	  // Process ID (ASID)
-	int vpn;	  // Virtual Page Number
-	int occupied; // Whether the slot is in use
+	int asid;	  /* Process ID (ASID) */
+	int vpn;	  /* Virtual Page Number */
+	int occupied; /* Whether the slot is in use */
 } swapPoolEntry_t;
 
 #endif

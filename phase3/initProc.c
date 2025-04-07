@@ -24,8 +24,9 @@ pcb_PTR asidProcessTable[UPROCMAX + 1]; /* Index 1 to 8; index 0 unused */
 void initPageTable(support_t *supportStruct)
 {
     int asid = supportStruct->sup_asid;
+    int i;
 
-    for (int i = 0; i < PAGE_TABLE_SIZE; i++)
+    for (i = 0; i < PAGE_TABLE_SIZE; i++)
     {
         unsigned int vpn;
 
@@ -61,7 +62,9 @@ void initPageTable(support_t *supportStruct)
 
 void initUProcs()
 {
-    for (int i = 1; i <= UPROCMAX; i++)
+    int i;
+
+    for (i = 1; i <= UPROCMAX; i++)
     {
         pcb_PTR newProc = allocPcb();
         if (newProc == NULL)

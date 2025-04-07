@@ -95,7 +95,8 @@ void supportSyscallHandler(state_t *exceptionState)
 void supTerminate()
 {
     /* Free all swap pool entries belonging to this process */
-    for (int i = 0; i < SWAP_POOL_SIZE; i++)
+    int i;
+    for (i = 0; i < SWAP_POOL_SIZE; i++)
     {
         if (swapPool[i].occupied && swapPool[i].asid == currentProcess->p_supportStruct->sup_asid)
         {
@@ -153,7 +154,8 @@ void supWriteToPrinter()
     /* Prepare buffer to hold the string */
     char buffer[129]; /* +1 for null terminator */
 
-    for (int i = 0; i < len; i++)
+    int i;
+    for (i = 0; i < len; i++)
     {
         buffer[i] = virtAddr[i]; /* Read from U-proc’s memory */
     }
@@ -198,7 +200,8 @@ void supWriteToTerminal()
     /* Prepare buffer to hold the string */
     char buffer[129]; /* +1 for null terminator */
 
-    for (int i = 0; i < len; i++)
+    int i;
+    for (i = 0; i < len; i++)
     {
         buffer[i] = virtAddr[i]; /* Read from U-proc’s memory */
     }

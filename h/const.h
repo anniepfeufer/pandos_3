@@ -126,6 +126,7 @@
 #define SWAP_POOL_SIZE (2 * UPROCMAX)
 
 #define UPROCMAX 8
+#define SUPPORT_STRUCT_POOL_SIZE UPROCMAX
 #define VPNSHIFT 12 /* Shift to get VPN from EntryLo */
 
 #define VPN_BASE 0x80000000 /* Base for text/data VPNs */
@@ -154,7 +155,7 @@
 #define UPROC_STACK 0xC0000000
 #define MAX_LEN 128
 
-#define INDEX_P_BIT 0x80000000 // Bit 31: Probe failure (P bit)
-#define INDEX_MASK 0x0000003F  // Bits 0–5: TLB index mask
+#define INDEX_P_BIT 0x80000000 /* Bit 31: Probe failure (P bit) */
+#define INDEX_MASK 0x0000003F  /* Bits 0–5: TLB index mask */
 
 #endif
