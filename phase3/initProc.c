@@ -60,6 +60,11 @@ void initPageTable(support_t *supportStruct)
     }
 }
 
+void debug(int a, int b){
+    int i;
+    i= a+b;
+}
+
 void initUProcs()
 {
     int i;
@@ -79,8 +84,12 @@ void initUProcs()
             PANIC(); /* Could not allocate support structure */
         }
 
+        debug(i, 100);
+
         newProc->p_supportStruct = support;
         support->sup_asid = i;
+
+        debug(i, 10);
 
         /* Initialize page table for the new U-proc */
         initPageTable(support);
@@ -115,6 +124,8 @@ void initUProcs()
         {
             PANIC(); /* SYS1 failed to create the U-proc */
         }
+
+        debug(i, 4);
     }
 }
 
