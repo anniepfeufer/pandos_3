@@ -26,6 +26,9 @@ pcb_t *readyQueue = NULL;                    /* Tail pointer to ready queue */
 pcb_t *currentProcess = NULL;                /* Currently running process */
 int deviceSemaphores[NUM_DEVICES + 1] = {0}; /* Device semaphores (extra one for pseudo-clock) */
 int masterSemaphore = 0;                     /* Global semaphore to wait for U-procs */
+int printerSem[8] = {1};                     /* Global semaphore for printer devices */
+int termReadSem[8] = {1};                    /* Global semaphore for reading terminal devices */
+int termWriteSem[8] = {1};                   /* Global semaphore for writing terminal devices */
 
 /* Declaring the test function */
 extern void test();

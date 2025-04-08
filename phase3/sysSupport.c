@@ -20,6 +20,8 @@
 #include "../h/initProc.h"
 #include "../h/vmSupport.h"
 
+
+
 void supportGenExceptionHandler()
 {
 
@@ -152,7 +154,8 @@ void supWriteToPrinter()
 
     /* Copy string into local buffer */
     char buffer[129]; /* +1 for null terminator */
-    for (int i = 0; i < len; i++)
+    int i;
+    for (i = 0; i < len; i++)
     {
         buffer[i] = virtAddr[i]; /* Read from U-proc’s memory */
     }
@@ -162,8 +165,8 @@ void supWriteToPrinter()
 
     /* Mutual exclusion */
     SYSCALL(PASSEREN, (int)&printerSem[lineNum], 0, 0);
-
-    for (int i = 0; i < len; i++)
+    
+    for (i = 0; i < len; i++)
     {
         printer->d_data0 = buffer[i];
 
@@ -219,7 +222,8 @@ void supWriteToTerminal()
     device_t *terminal = DEV_REG_ADDR(IL_TERMINAL, lineNum);
 
     char buffer[129];
-    for (int i = 0; i < len; i++)
+    int i;
+    for (i = 0; i < len; i++)
     {
         buffer[i] = virtAddr[i];
     }
@@ -228,7 +232,7 @@ void supWriteToTerminal()
     SYSCALL(PASSEREN, (int)&termWriteSem[lineNum], 0, 0);
 
     int sent = 0;
-    for (int i = 0; i < len; i++)
+    for (i = 0; i < len; i++)
     {
         terminal->t_transm_status = (buffer[i] << 8); /* char in upper byte */
 
@@ -298,7 +302,8 @@ void supReadTerminal()
 
     buffer[count] = '\0'; /* null-terminate just in case */
 
-    for (int i = 0; i < count; i++)
+    int i;
+    for (i = 0; i < count; i++)
     {
         virtAddr[i] = buffer[i]; /* copy to user space */
     }
@@ -314,5 +319,6 @@ void supReadTerminal()
 void supportProgTrapHandler()
 {
     SYSCALL(VERHOGEN, (int)&swapPoolSem, 0, 0); /* release mutual exclusion if held */
+    /* need to check if it is held */
     supTerminate();                             /* orderly termination */
 }
