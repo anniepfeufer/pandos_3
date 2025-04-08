@@ -26,7 +26,7 @@ void supportGenExceptionHandler()
 {
 
     /* Get the support structure for the current process */
-    support_t *sup = SYSCALL(GETSUPPORTPTR, 0, 0, 0);
+    support_t *sup = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);
 
     /* Get the exception state for the General Exception (index 0) */
     state_t *exceptionState = &sup->sup_exceptState[GENERALEXCEPT];
