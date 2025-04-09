@@ -29,7 +29,7 @@ int masterSemaphore = 0;                     /* Global semaphore to wait for U-p
 int printerSem[8] = {1};                     /* Global semaphore for printer devices */
 int termReadSem[8] = {1};                    /* Global semaphore for reading terminal devices */
 int termWriteSem[8] = {1};                   /* Global semaphore for writing terminal devices */
-static support_t *supportFreeList=NULL;             /* initialize support free list */
+support_t *supportFreeList=NULL;             /* initialize support free list */
 
 /* Declaring the test function */
 extern void test();

@@ -135,8 +135,7 @@ void syscallHandler(state_t *savedState)
         break;
     default:
         /* Invalid syscall, terminate the process */
-        sysTerminate(currentProcess);
-        scheduler();
+        passUpOrDie(GENERALEXCEPT);
     }
 
     LDST(savedState);
