@@ -22,14 +22,11 @@ extern int softBlockCount;
 extern pcb_PTR readyQueue;               
 extern pcb_PTR currentProcess;
 extern int deviceSemaphores[NUM_DEVICES + 1];
-extern int masterSemaphore;
 
 /* Function Prototypes */
 extern void main();
 extern void createProcess();
 extern void uTLB_RefillHandler(); 
-extern void initSupportStructs();
-extern void initPhase3Resources();
 
 
 /***************************************************************/

@@ -15,4 +15,12 @@ extern void initUProcs();
 support_t *allocSupportStruct();
 extern void freeSupportStruct(support_t *s);
 
+extern void initSupportStructs();
+extern void initPhase3Resources();
+
+extern int printerSem[8];
+extern int termReadSem[8];
+extern int termWriteSem[8];
+extern int masterSemaphore;
+
 #endif

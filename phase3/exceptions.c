@@ -450,3 +450,34 @@ void memcopy(void *dest, const void *src, unsigned int n)
         *d++ = *s++;
     }
 }
+
+void uTLB_RefillHandler()
+{
+    state_t *savedState = (state_t *)BIOSDATAPAGE; /* Get the saved exception state */
+
+    unsigned int entryHi = savedState->s_entryHI; /* Get the EntryHI value */
+    int vpn = entryHi >> VPNSHIFT;                /* Extract VPN (upper 20 bits) */
+
+    /* Get current process’s support structure and ASID */
+    support_t *support = (support_t *)currentProcess->p_supportStruct;
+    int asid = support->sup_asid;
+
+    /* Page index = vpn - (VPN_BASE >> VPNSHIFT) */
+    int pageIndex = vpn - (VPN_BASE >> VPNSHIFT); /* Locate Page Table Entry */
+
+    if (pageIndex < 0 || pageIndex >= PAGE_TABLE_SIZE)
+    {
+        PANIC(); /* Safety check */
+    }
+
+    /* Get the Page Table Entry */
+    pageTableEntry_t entry = support->sup_pageTable[pageIndex];
+
+    /* Load Page Table entry into the TLB */
+    setENTRYHI(entry.entryHi);
+    setENTRYLO(entry.entryLo);
+    TLBWR(); /* Write the entry into the TLB */
+
+    /* Retry the instruction that caused the fault */
+    LDST(savedState);
+}

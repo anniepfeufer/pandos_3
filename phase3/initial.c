@@ -25,11 +25,6 @@ int softBlockCount = 0;                      /* Soft-blocked process count */
 pcb_t *readyQueue = NULL;                    /* Tail pointer to ready queue */
 pcb_t *currentProcess = NULL;                /* Currently running process */
 int deviceSemaphores[NUM_DEVICES + 1] = {0}; /* Device semaphores (extra one for pseudo-clock) */
-int masterSemaphore = 0;                     /* Global semaphore to wait for U-procs */
-int printerSem[8] = {1};                     /* Global semaphore for printer devices */
-int termReadSem[8] = {1};                    /* Global semaphore for reading terminal devices */
-int termWriteSem[8] = {1};                   /* Global semaphore for writing terminal devices */
-support_t *supportFreeList=NULL;             /* initialize support free list */
 
 /* Declaring the test function */
 extern void test();
@@ -145,26 +140,4 @@ void test()
     SYSCALL(TERMINATEPROCESS, 0, 0, 0); /* SYS2: all done */
 }
 
-void initPhase3Resources()
-{
-    initSwapPool();
-    swapPoolSem = 1;
 
-    int i;
-    for (i = 0; i < UPROCMAX; i++)
-    {
-        printerSem[i] = 1;
-        termReadSem[i] = 1;
-        termWriteSem[i] = 1;
-    }
-}
-
-void initSupportStructs()
-{
-    int i; 
-    for (i = 0; i < SUPPORT_STRUCT_POOL_SIZE; i++)
-    {
-        supportStructPool[i].sup_next = supportFreeList;
-        supportFreeList = &supportStructPool[i];
-    }
-}

@@ -7,7 +7,7 @@
  * processes to map to the swap pool. It calls initvmSupport to set up
  * the swap pool table and semaphore, itinitializes the page table,
  * pass up or die fields, and initial state for each process before calling
- * SYS1 to create process. 
+ * SYS1 to create process.
  *
  ***************************************************************/
 
@@ -20,6 +20,11 @@
 #include "../h/sysSupport.h"
 
 pcb_PTR asidProcessTable[UPROCMAX + 1]; /* Index 1 to 8; index 0 unused */
+int printerSem[8];
+int termReadSem[8];
+int termWriteSem[8];
+int masterSemaphore;
+support_t *supportFreeList = NULL; /* initialize support free list */
 
 void initPageTable(support_t *supportStruct)
 {
@@ -60,9 +65,10 @@ void initPageTable(support_t *supportStruct)
     }
 }
 
-void debug(int a, int b){
+void debug(int a, int b)
+{
     int i;
-    i= a+b;
+    i = a + b;
 }
 
 void initUProcs()
@@ -139,4 +145,28 @@ void freeSupportStruct(support_t *s)
 {
     s->sup_next = supportFreeList;
     supportFreeList = s;
+}
+
+void initPhase3Resources()
+{
+    initSwapPool();
+    swapPoolSem = 1;
+
+    int i;
+    for (i = 0; i < UPROCMAX; i++)
+    {
+        printerSem[i] = 1;
+        termReadSem[i] = 1;
+        termWriteSem[i] = 1;
+    }
+}
+
+void initSupportStructs()
+{
+    int i;
+    for (i = 0; i < SUPPORT_STRUCT_POOL_SIZE; i++)
+    {
+        supportStructPool[i].sup_next = supportFreeList;
+        supportFreeList = &supportStructPool[i];
+    }
 }
