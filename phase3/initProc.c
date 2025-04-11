@@ -25,6 +25,7 @@ int termReadSem[8];
 int termWriteSem[8];
 int masterSemaphore;
 support_t *supportFreeList = NULL; /* initialize support free list */
+support_t supportStructPool[SUPPORT_STRUCT_POOL_SIZE]; 
 
 void initPageTable(support_t *supportStruct)
 {

@@ -451,6 +451,11 @@ void memcopy(void *dest, const void *src, unsigned int n)
     }
 }
 
+/*
+ * Handles TLB refill exceptions.
+ * It retrieves the page table entry for the faulting process and loads it into the TLB.
+ * If the page table entry is not valid, the process is terminated.
+ */
 void uTLB_RefillHandler()
 {
     state_t *savedState = (state_t *)BIOSDATAPAGE; /* Get the saved exception state */
@@ -460,7 +465,6 @@ void uTLB_RefillHandler()
 
     /* Get current process’s support structure and ASID */
     support_t *support = (support_t *)currentProcess->p_supportStruct;
-    int asid = support->sup_asid;
 
     /* Page index = vpn - (VPN_BASE >> VPNSHIFT) */
     int pageIndex = vpn - (VPN_BASE >> VPNSHIFT); /* Locate Page Table Entry */

@@ -4,7 +4,7 @@
 #include "../h/types.h"
 
 extern pcb_PTR asidProcessTable[UPROCMAX + 1]; /* Index 1 to 8; index 0 unused */
-static support_t supportStructPool[SUPPORT_STRUCT_POOL_SIZE];  /*Pool of support structures */
+extern support_t supportStructPool[SUPPORT_STRUCT_POOL_SIZE];  /*Pool of support structures */
 extern support_t *supportFreeList;                     /* Free list of support structures */
 
 /* Initializes the Page Table for a given U-proc */
