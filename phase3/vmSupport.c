@@ -27,6 +27,41 @@ swapPoolEntry_t swapPool[SWAP_POOL_SIZE]; /* Swap Pool: Allocated in kernel memo
 int swapPoolSem = 1;
 static int swapIndex = 0;
 
+/*
+ * Handles TLB refill exceptions.
+ * It retrieves the page table entry for the faulting process and loads it into the TLB.
+ * If the page table entry is not valid, the process is terminated.
+ */
+void uTLB_RefillHandler()
+{
+    state_t *savedState = (state_t *)BIOSDATAPAGE; /* Get the saved exception state */
+
+    unsigned int entryHi = savedState->s_entryHI; /* Get the EntryHI value */
+    int vpn = entryHi >> VPNSHIFT;                /* Extract VPN (upper 20 bits) */
+
+    /* Get current process’s support structure and ASID */
+    support_t *support = (support_t *)currentProcess->p_supportStruct;
+
+    /* Page index = vpn - (VPN_BASE >> VPNSHIFT) */
+    int pageIndex = vpn - (VPN_BASE >> VPNSHIFT); /* Locate Page Table Entry */
+
+    if (pageIndex < 0 || pageIndex >= PAGE_TABLE_SIZE)
+    {
+        PANIC(); /* Safety check */
+    }
+
+    /* Get the Page Table Entry */
+    pageTableEntry_t entry = support->sup_pageTable[pageIndex];
+
+    /* Load Page Table entry into the TLB */
+    setENTRYHI(entry.entryHi);
+    setENTRYLO(entry.entryLo);
+    TLBWR(); /* Write the entry into the TLB */
+
+    /* Retry the instruction that caused the fault */
+    LDST(savedState);
+}
+
 /* Initialize the Swap Pool Table */
 void initSwapPool()
 {
