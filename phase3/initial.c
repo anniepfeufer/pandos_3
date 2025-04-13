@@ -77,17 +77,17 @@ void main()
     /* Load the Interval Timer with 100 milliseconds */
     LDIT(CLOCKINTERVAL);
 
+    /* Create Initial Process */
+    createProcess();
+
     /* Initialize support structures for U-procs */
     initSupportStructs();
-
-    /* Initialize U-procs */
-    initUProcs();
 
     /* Phase 3: Swap pool + device semaphores */
     initPhase3Resources();
 
-    /* Create Initial Process */
-    createProcess();
+    /* Initialize U-procs*/
+    initUProcs();
 
     /* Start Scheduler */
     scheduler();
@@ -136,6 +136,7 @@ void createProcess()
 void test()
 {
     /* PHASE 3: test() waits for all U-procs to terminate */
+
     int i;
     for (i = 0; i < UPROCMAX; i++)
     {
