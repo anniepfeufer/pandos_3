@@ -120,7 +120,7 @@ void initUProcs()
         newProc->p_s.s_t9 = UPROC_START;
         newProc->p_s.s_sp = UPROC_STACK;
         newProc->p_s.s_status = ALLOFF | IEPBITON | IM | TEBITON; /* user mode with timer */
-        newProc->p_s.s_entryHI = i << ASID_SHIFT;
+        newProc->p_s.s_entryHI = newProc->p_s.s_entryHI | (i << ASID_SHIFT);
 
         /* ------------ Launch U-proc using SYS1 ------------ */
         int result = SYSCALL(CREATEPROCESS, (int)&(newProc->p_s), (int)support, 0);
@@ -129,7 +129,6 @@ void initUProcs()
             PANIC(); /* SYS1 failed to create the U-proc */
         }
     }
-    debug(-1, -1);
 }
 
 support_t *allocSupportStruct()

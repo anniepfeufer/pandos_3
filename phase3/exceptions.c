@@ -463,7 +463,7 @@ void uTLB_RefillHandler()
     unsigned int entryHi = savedState->s_entryHI; /* Get the EntryHI value */
     int vpn = entryHi >> VPNSHIFT;                /* Extract VPN (upper 20 bits) */
 
-    /* Get current process’s support structure and ASID */
+    /* Get current process’s support structure */
     support_t *support = (support_t *)currentProcess->p_supportStruct;
 
     /* Page index = vpn - (VPN_BASE >> VPNSHIFT) */

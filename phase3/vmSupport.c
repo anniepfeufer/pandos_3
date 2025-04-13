@@ -27,7 +27,6 @@ swapPoolEntry_t swapPool[SWAP_POOL_SIZE]; /* Swap Pool: Allocated in kernel memo
 int swapPoolSem = 1;
 static int swapIndex = 0;
 
-
 /* Initialize the Swap Pool Table */
 void initSwapPool()
 {

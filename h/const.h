@@ -126,7 +126,7 @@
 #define PAGE_TABLE_SIZE 32
 #define SWAP_POOL_SIZE (2 * UPROCMAX)
 
-#define UPROCMAX 8
+#define UPROCMAX 1
 #define SUPPORT_STRUCT_POOL_SIZE UPROCMAX
 #define VPNSHIFT 12 /* Shift to get VPN from EntryLo */
 
