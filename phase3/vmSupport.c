@@ -105,6 +105,7 @@ void pagerHandler()
     /* Step 5: Determine missing VPN */
     unsigned int entryHi = exceptionState->s_entryHI;
     int vpn = (entryHi & VPN_MASK) >> VPNSHIFT;
+    int pageIndex = vpn - (VPN_BASE >> VPNSHIFT);
 
     /* Step 6: Pick a frame */
     int frameIndex = getFreeFrame();
@@ -113,13 +114,14 @@ void pagerHandler()
         frameIndex = pickVictimFrame();
         int victimASID = swapPool[frameIndex].asid;
         int victimVPN = swapPool[frameIndex].vpn;
+        int victimPageIndex = victimVPN - (VPN_BASE >> VPNSHIFT);
 
         /* Step 8: Evict page from victim process */
         setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
 
         support_t *victimSupport = getSupportStruct(victimASID);
         pageTableEntry_t *victimPTE = victimSupport->sup_pageTable;
-        pageTableEntry_t *victimEntry = &victimPTE[victimVPN];
+        pageTableEntry_t *victimEntry = &victimPTE[victimPageIndex];
 
         /* Invalidate the Page Table entry */
         victimEntry->entryLo &= ~ENTRYLO_VALID;
@@ -151,7 +153,7 @@ void pagerHandler()
     /* Step 11: Update Page Table */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
 
-    pageTableEntry_t *pte = &supportStruct->sup_pageTable[vpn];
+    pageTableEntry_t *pte = &supportStruct->sup_pageTable[pageIndex];
     pte->entryLo = (frameIndex << VPNSHIFT) | ENTRYLO_VALID | ENTRYLO_DIRTY;
 
     /* Step 12: Refresh TLB */
