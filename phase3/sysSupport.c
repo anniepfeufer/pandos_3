@@ -172,6 +172,7 @@ void supWriteToPrinter()
 
         /* Atomically COMMAND + SYS5 */
         setSTATUS(getSTATUS() & ~IECON); /* disable interrupts */
+        setENTRYHI(asid << ASID_SHIFT);  /* Ensure correct ASID context for the I/O */
         printer->d_command = PRINTCHR;
         SYSCALL(WAITIO, PRNTINT, lineNum, 0);
         setSTATUS(getSTATUS() | IECON); /* re-enable interrupts */
@@ -234,10 +235,9 @@ void supWriteToTerminal()
     int sent = 0;
     for (i = 0; i < len; i++)
     {
-        terminal->t_transm_status = (buffer[i] << 8); /* char in upper byte */
-
-        setSTATUS(getSTATUS() & ~IECON);             
-        terminal->t_transm_command = TRANSMITCHAR;   
+        setSTATUS(getSTATUS() & ~IECON);
+        setENTRYHI(asid << ASID_SHIFT); /* Ensure correct ASID context for the I/O */
+        terminal->t_transm_command = (buffer[i] << 8) | TRANSMITCHAR;
         SYSCALL(WAITIO, TERMINT, lineNum, TRANSMIT);
         setSTATUS(getSTATUS() | IECON);             
 
@@ -291,11 +291,12 @@ void supReadTerminal()
     do
     {
         setSTATUS(getSTATUS() & ~IECON);
+        setENTRYHI(asid << ASID_SHIFT); /* Ensure correct ASID context for the I/O */
         terminal->t_recv_command = RECEIVECHAR;
         SYSCALL(WAITIO, TERMINT, lineNum, RECEIVE);
         setSTATUS(getSTATUS() | IECON);
 
-        ch = terminal->t_recv_status & STATUS_MASK;
+        ch = (terminal->t_recv_status >> 8) & STATUS_MASK;
 
         buffer[count++] = ch;
     } while (ch != '\n' && count < MAX_LEN);

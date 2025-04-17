@@ -179,6 +179,7 @@ void loadPageFromBackingStore(int asid, int vpn, int frame)
 
     /* Atomically issue read command */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
+    setENTRYHI(asid << ASID_SHIFT);  /* Ensure correct ASID context for the I/O */
     flashDev->d_command = (vpn << COMMAND_SHIFT) | READBLK;
     SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
     setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
@@ -199,6 +200,7 @@ void writePageToBackingStore(int asid, int vpn, int frame)
 
     /* Atomically issue write command */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
+    setENTRYHI(asid << ASID_SHIFT);  /* Ensure correct ASID context for the I/O */
     flashDev->d_command = (vpn << COMMAND_SHIFT) | WRITEBLK;
     SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
     setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
