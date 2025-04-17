@@ -137,7 +137,7 @@ void pagerHandler()
             setENTRYLO(victimEntry->entryLo);
             TLBWI(); /* Overwrite the entry in TLB */
         }
-        setSTATUS(getSTATUS()); /* Re-enable interrupts */
+        setSTATUS(getSTATUS() | IECON); /* Re-enable interrupts */
 
         writePageToBackingStore(victimASID, victimVPN, frameIndex);
     }
@@ -161,7 +161,7 @@ void pagerHandler()
     setENTRYLO(pte->entryLo);
     TLBWR();
 
-    setSTATUS(getSTATUS()); /* Re-enable interrupts */
+    setSTATUS(getSTATUS() | IECON); /* Re-enable interrupts */
 
     /* Step 13: Release semaphore */
     SYSCALL(VERHOGEN, (int)&swapPoolSem, 0, 0);
@@ -177,11 +177,15 @@ void loadPageFromBackingStore(int asid, int vpn, int frame)
     /* Set RAM target for flash read */
     flashDev->d_data0 = (memaddr)(RAMSTART + (frame * PAGESIZE));
 
+    debug((int)flashDev, 10);
+
     /* Atomically issue read command */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
     flashDev->d_command = (vpn << COMMAND_SHIFT) | READBLK;
     SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
     setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
+
+    debug((int)flashDev->d_status, 0);
 
     /* Check device status */
     if (flashDev->d_status != 1) /* 1 = Device Ready */
