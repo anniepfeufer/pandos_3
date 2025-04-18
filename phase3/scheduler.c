@@ -37,7 +37,6 @@ void scheduler()
         {
             /* Wait for an I/O or timer interrupt */
             setSTATUS((IECON | IM) & ~TEBITON);
-            debug(-1, -1);
             WAIT();
         }
         else

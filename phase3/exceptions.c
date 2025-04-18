@@ -322,8 +322,6 @@ void sysWaitIO(state_t *savedState, int intLineNo, int devNum, int waitForTermRe
         deviceIndex = (intLineNo - 3) * DEVPERINT + devNum;
     }
 
-    debug(deviceIndex, devNum); /*here*/
-
     int *semaddr = &(deviceSemaphores[deviceIndex]);
 
     /* increment softBlockCount */

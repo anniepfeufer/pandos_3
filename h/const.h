@@ -135,9 +135,9 @@
 #define STACK_PAGE_VPN 0xBFFFF000 /* Top of kuseg for SP */
 
 /* EntryLo bit flags */
-#define ENTRYLO_DIRTY 0x00000004  /* D = 1 (write-enabled) */
-#define ENTRYLO_VALID 0x00000002  /* V = 1 (valid) */
-#define ENTRYLO_GLOBAL 0x00000001 /* G = 1 (global) */
+#define ENTRYLO_DIRTY_SHIFT   10/* D = 1 (write-enabled) */
+#define ENTRYLO_VALID_SHIFT   9 /* V = 1 (valid) */
+#define ENTRYLO_GLOBAL_SHIFT  8 /* G = 1 (global) */
 
 #define ASID_SHIFT 6        /* ASID bits [11:6] in EntryHi */
 #define VPN_MASK 0xFFFFF000 /* Top 20 bits for VPN */

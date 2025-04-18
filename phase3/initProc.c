@@ -51,17 +51,17 @@ void initPageTable(support_t *supportStruct)
         if (i == 0)
         {
             /* .text page: valid but read-only (no DIRTY) */
-            supportStruct->sup_pageTable[i].entryLo = ENTRYLO_VALID;
+            /*supportStruct->sup_pageTable[i].entryLo = 1 << ENTRYLO_VALID_SHIFT;*/
         }
         else if (i == 1)
         {
             /* .data page: valid and writable */
-            supportStruct->sup_pageTable[i].entryLo = ENTRYLO_VALID | ENTRYLO_DIRTY;
+            supportStruct->sup_pageTable[i].entryLo = (1 << ENTRYLO_VALID_SHIFT) | (1 << ENTRYLO_DIRTY_SHIFT);
         }
         else
         {
             /* All other pages: initially invalid, writable if needed */
-            supportStruct->sup_pageTable[i].entryLo = ENTRYLO_DIRTY;
+            supportStruct->sup_pageTable[i].entryLo = 1 << ENTRYLO_DIRTY_SHIFT;
         }
     }
 }

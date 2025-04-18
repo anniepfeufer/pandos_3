@@ -124,7 +124,7 @@ void pagerHandler()
         pageTableEntry_t *victimEntry = &victimPTE[victimPageIndex];
 
         /* Invalidate the Page Table entry */
-        victimEntry->entryLo &= ~ENTRYLO_VALID;
+        victimEntry->entryLo &= ~(1 << ENTRYLO_VALID_SHIFT);
 
         /* Probe the TLB to check if entry is present */
         setENTRYHI(victimEntry->entryHi);
@@ -154,14 +154,17 @@ void pagerHandler()
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
 
     pageTableEntry_t *pte = &supportStruct->sup_pageTable[pageIndex];
-    pte->entryLo = (frameIndex << VPNSHIFT) | ENTRYLO_VALID | ENTRYLO_DIRTY;
+    pte->entryLo = (frameIndex << VPNSHIFT) | (1 << ENTRYLO_VALID_SHIFT) | (1 << ENTRYLO_DIRTY_SHIFT);
+    debug((int)pte->entryHi, (int)pte->entryLo);
 
     /* Step 12: Refresh TLB */
     setENTRYHI(pte->entryHi);
     setENTRYLO(pte->entryLo);
-    TLBWR();
+    TLBWR(); /*here*/
 
     setSTATUS(getSTATUS() | IECON); /* Re-enable interrupts */
+
+    debug(-1, -1);
 
     /* Step 13: Release semaphore */
     SYSCALL(VERHOGEN, (int)&swapPoolSem, 0, 0);
@@ -177,16 +180,12 @@ void loadPageFromBackingStore(int asid, int vpn, int frame)
     /* Set RAM target for flash read */
     flashDev->d_data0 = (memaddr)(RAMSTART + (frame * PAGESIZE));
 
-    debug((int)flashDev, 10);
-
     /* Atomically issue read command */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
     setENTRYHI((getENTRYHI() & VPN_MASK) | (asid << ASID_SHIFT));
     flashDev->d_command = (vpn << COMMAND_SHIFT) | READBLK;
     SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
     setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
-
-    debug((int)flashDev->d_status, 0);
 
     /* Check device status */
     if (flashDev->d_status != 1) /* 1 = Device Ready */
