@@ -126,7 +126,7 @@
 #define PAGE_TABLE_SIZE 32
 #define SWAP_POOL_SIZE (2 * UPROCMAX)
 
-#define UPROCMAX 8
+#define UPROCMAX 1
 #define SUPPORT_STRUCT_POOL_SIZE UPROCMAX
 #define VPNSHIFT 12 /* Shift to get VPN from EntryLo */
 
@@ -148,7 +148,7 @@
 
 #define READBLK 2
 #define WRITEBLK 3
-#define FLASH_BASE 0x10000050 /* base of flash devices */
+#define FLASH_BASE 0x100000d4 /* base of flash devices */
 #define FLASH_SIZE 0x10       /* each device has 16 bytes of registers */
 #define COMMAND_SHIFT 8
 

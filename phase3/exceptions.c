@@ -105,7 +105,6 @@ void syscallHandler(state_t *savedState)
         savedState->s_v0 = sysCreateProcess((state_t *)savedState->s_a1, (support_t *)savedState->s_a2);
         break;
     case TERMINATEPROCESS:
-        /* debugVar2 = 0xBEEF; */
         sysTerminate(currentProcess);
         scheduler();
         break;
@@ -322,6 +321,8 @@ void sysWaitIO(state_t *savedState, int intLineNo, int devNum, int waitForTermRe
         /* Other devices: Normal indexing */
         deviceIndex = (intLineNo - 3) * DEVPERINT + devNum;
     }
+
+    debug(deviceIndex, devNum); /*here*/
 
     int *semaddr = &(deviceSemaphores[deviceIndex]);
 
