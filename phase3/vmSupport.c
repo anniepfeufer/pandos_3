@@ -203,7 +203,8 @@ void writePageToBackingStore(int asid, int vpn, int frame)
     /* Atomically issue write command */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
     setENTRYHI((getENTRYHI() & VPN_MASK) | (asid << ASID_SHIFT));
-    flashDev->d_command = (vpn << COMMAND_SHIFT) | WRITEBLK;
+    int blockNo = (vpn - FIRST_INSTR) / BLOCKSIZE; 
+    flashDev->d_command = (blockNo << COMMAND_SHIFT) | WRITEBLK;
     SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
     setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
 
