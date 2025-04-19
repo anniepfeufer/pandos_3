@@ -158,9 +158,7 @@ void pagerHandler()
     debug((int)pte->entryHi, (int)pte->entryLo);
 
     /* Step 12: Refresh TLB */
-    setENTRYHI(pte->entryHi);
-    setENTRYLO(pte->entryLo);
-    TLBWR(); /*here*/
+    TLBCLR();
 
     setSTATUS(getSTATUS() | IECON); /* Re-enable interrupts */
 
@@ -183,7 +181,8 @@ void loadPageFromBackingStore(int asid, int vpn, int frame)
     /* Atomically issue read command */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
     setENTRYHI((getENTRYHI() & VPN_MASK) | (asid << ASID_SHIFT));
-    flashDev->d_command = (vpn << COMMAND_SHIFT) | READBLK;
+    int blockNo = (vpn - FIRST_INSTR) / BLOCKSIZE; 
+    flashDev->d_command = (blockNo << COMMAND_SHIFT) | READBLK;
     SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
     setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
 

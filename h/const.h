@@ -9,6 +9,7 @@
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
+#define BLOCKSIZE 0x1000 
 #define WORDLEN 4     /* word size in bytes	*/
 
 /* timer, timescale, TOD-LO and other bus regs */
@@ -151,6 +152,7 @@
 #define FLASH_BASE 0x100000d4 /* base of flash devices */
 #define FLASH_SIZE 0x10       /* each device has 16 bytes of registers */
 #define COMMAND_SHIFT 8
+#define FIRST_INSTR 0x80000
 
 #define UPROC_START 0x800000B0
 #define UPROC_STACK 0xC0000000
