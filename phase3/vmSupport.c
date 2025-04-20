@@ -176,7 +176,7 @@ void loadPageFromBackingStore(int asid, int vpn, int frame)
     device_t *flashDev = (device_t *)(FLASH_BASE + (asid - 1) * FLASH_SIZE);
 
     /* Set RAM target for flash read */
-    flashDev->d_data0 = (memaddr)(RAMSTART + (frame * PAGESIZE));
+    flashDev->d_data0 = (memaddr)(RAMSTART + ((SWAP_POOL_START_FRAME + frame) * PAGESIZE));
 
     /* Atomically issue read command */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
@@ -198,7 +198,7 @@ void writePageToBackingStore(int asid, int vpn, int frame)
     device_t *flashDev = (device_t *)(FLASH_BASE + (asid - 1) * FLASH_SIZE);
 
     /* Set RAM source for flash write */
-    flashDev->d_data0 = (memaddr)(RAMSTART + (frame * PAGESIZE));
+    flashDev->d_data0 = (memaddr)(RAMSTART + ((SWAP_POOL_START_FRAME + frame) * PAGESIZE));
 
     /* Atomically issue write command */
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
