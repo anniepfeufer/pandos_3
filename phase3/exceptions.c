@@ -466,8 +466,16 @@ void uTLB_RefillHandler()
     support_t *support = (support_t *)currentProcess->p_supportStruct;
 
     /* Page index = vpn - (VPN_BASE >> VPNSHIFT) */
-    int pageIndex = vpn - (VPN_BASE >> VPNSHIFT); /* Locate Page Table Entry */
-
+    int pageIndex;
+    if ((vpn << VPNSHIFT) == STACK_PAGE_VPN)
+    {
+        pageIndex = STACK_PAGE_INDEX;
+    }
+    else
+    {
+        pageIndex = vpn - (VPN_BASE >> VPNSHIFT);
+    }
+    
     if (pageIndex < 0 || pageIndex >= PAGE_TABLE_SIZE)
     {
         PANIC(); /* Safety check */

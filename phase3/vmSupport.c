@@ -105,7 +105,15 @@ void pagerHandler()
     /* Step 5: Determine missing VPN */
     unsigned int entryHi = exceptionState->s_entryHI;
     int vpn = (entryHi & VPN_MASK) >> VPNSHIFT;
-    int pageIndex = vpn - (VPN_BASE >> VPNSHIFT);
+    int pageIndex;
+    if ((vpn << VPNSHIFT) == STACK_PAGE_VPN)
+    {
+        pageIndex = STACK_PAGE_INDEX;
+    }
+    else
+    {
+        pageIndex = vpn - (VPN_BASE >> VPNSHIFT);
+    }
 
     /* Step 6: Pick a frame */
     int frameIndex = getFreeFrame();
@@ -114,7 +122,15 @@ void pagerHandler()
         frameIndex = pickVictimFrame();
         int victimASID = swapPool[frameIndex].asid;
         int victimVPN = swapPool[frameIndex].vpn;
-        int victimPageIndex = victimVPN - (VPN_BASE >> VPNSHIFT);
+        int victimPageIndex;
+        if ((victimVPN << VPNSHIFT) == STACK_PAGE_VPN)
+        {
+            victimPageIndex = STACK_PAGE_INDEX;
+        }
+        else
+        {
+            victimPageIndex = victimVPN - (VPN_BASE >> VPNSHIFT);
+        }
 
         /* Step 8: Evict page from victim process */
         setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
