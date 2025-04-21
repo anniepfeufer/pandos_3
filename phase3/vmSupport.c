@@ -170,7 +170,8 @@ void pagerHandler()
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
 
     pageTableEntry_t *pte = &supportStruct->sup_pageTable[pageIndex];
-    pte->entryLo = (frameIndex << VPNSHIFT) | (1 << ENTRYLO_VALID_SHIFT) | (1 << ENTRYLO_DIRTY_SHIFT);
+    pte->entryLo = (FRAMEPOOL + (frameIndex * PAGESIZE)) | (1 << ENTRYLO_VALID_SHIFT) | (1 << ENTRYLO_DIRTY_SHIFT);
+
     debug((int)pte->entryHi, (int)pte->entryLo);
 
     /* Step 12: Refresh TLB */
