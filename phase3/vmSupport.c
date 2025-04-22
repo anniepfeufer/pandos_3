@@ -199,6 +199,11 @@ void loadPageFromBackingStore(int asid, int vpn, int frame)
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
     setENTRYHI((getENTRYHI() & VPN_MASK) | (asid << ASID_SHIFT));
     int pageIndex = vpn - (VPN_BASE >> VPNSHIFT);
+    if (vpn == (STACK_PAGE_VPN>>VPNSHIFT))
+    {
+        pageIndex = STACK_PAGE_INDEX;
+    }
+    debug(pageIndex, 31);
     flashDev->d_command = (pageIndex << COMMAND_SHIFT) | READBLK;
     SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
     setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
@@ -221,6 +226,10 @@ void writePageToBackingStore(int asid, int vpn, int frame)
     setSTATUS(getSTATUS() & ~IECON); /* Disable interrupts */
     setENTRYHI((getENTRYHI() & VPN_MASK) | (asid << ASID_SHIFT));
     int pageIndex = vpn - (VPN_BASE >> VPNSHIFT);
+    if (vpn == (STACK_PAGE_VPN>>VPNSHIFT))
+    {
+        pageIndex = STACK_PAGE_INDEX;
+    }
     flashDev->d_command = (pageIndex << COMMAND_SHIFT) | WRITEBLK;
     SYSCALL(WAITIO, FLASHINT, asid - 1, 0); /* Wait for I/O on flash line */
     setSTATUS(getSTATUS() | IECON);         /* Re-enable interrupts */
