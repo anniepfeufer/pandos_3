@@ -150,7 +150,7 @@ void supWriteToPrinter()
 
     int asid = support->sup_asid;
     int lineNum = asid - 1; /* Translate ASID to printer line number (line = asid - 1) */
-    device_t *printer = (device_t *)(DEV_REG_ADDR(IL_PRINTER, lineNum));
+    device_t *printer = (device_t *)(DEV_REG_ADDR(PRNTINT, lineNum));
 
     /* Copy string into local buffer */
     char buffer[129]; /* +1 for null terminator */
@@ -212,6 +212,8 @@ void supWriteToTerminal()
     char *virtAddr = (char *)state->s_a1;
     int len = state->s_a2;
 
+    debug(len, 100);
+
     /* Validate len and address range */
     if (len <= 0 || len > MAX_LEN || (memaddr)virtAddr < KUSEG)
     {
@@ -220,7 +222,7 @@ void supWriteToTerminal()
 
     int asid = support->sup_asid;
     int lineNum = asid - 1;
-    device_t *terminal = DEV_REG_ADDR(IL_TERMINAL, lineNum);
+    device_t *terminal = DEV_REG_ADDR(TERMINT, lineNum);
 
     char buffer[129];
     int i;
@@ -280,7 +282,7 @@ void supReadTerminal()
 
     int asid = support->sup_asid;
     int lineNum = asid - 1;
-    device_t *terminal = DEV_REG_ADDR(IL_TERMINAL, lineNum);
+    device_t *terminal = DEV_REG_ADDR(TERMINT, lineNum);
 
     char buffer[129];
     int count = 0;
