@@ -26,8 +26,6 @@ pcb_t *readyQueue = NULL;                    /* Tail pointer to ready queue */
 pcb_t *currentProcess = NULL;                /* Currently running process */
 int deviceSemaphores[NUM_DEVICES + 1] = {0}; /* Device semaphores (extra one for pseudo-clock) */
 
-/* Declaring the test function */
-extern void test();
 
 /**
  The `main` function serves as the starting point of the kernel, responsible for:
@@ -128,17 +126,6 @@ void createProcess()
     processCount++; /* Increment process count */
 }
 
-void test()
-{
-    /* PHASE 3: test() waits for all U-procs to terminate */
 
-    int i;
-    for (i = 0; i < UPROCMAX; i++)
-    {
-        SYSCALL(PASSEREN, (int)&masterSemaphore, 0, 0); /* SYS3: wait for signal */
-    }
-
-    SYSCALL(TERMINATEPROCESS, 0, 0, 0); /* SYS2: all done */
-}
 
 

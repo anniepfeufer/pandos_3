@@ -170,3 +170,16 @@ void initSupportStructs()
         supportFreeList = &supportStructPool[i];
     }
 }
+
+void test()
+{
+    /* PHASE 3: test() waits for all U-procs to terminate */
+
+    int i;
+    for (i = 0; i < UPROCMAX; i++)
+    {
+        SYSCALL(PASSEREN, (int)&masterSemaphore, 0, 0); /* SYS3: wait for signal */
+    }
+
+    SYSCALL(TERMINATEPROCESS, 0, 0, 0); /* SYS2: all done */
+}

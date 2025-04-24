@@ -172,7 +172,6 @@ void supWriteToPrinter()
 
         /* Atomically COMMAND + SYS5 */
         setSTATUS(getSTATUS() & ~IECON); /* disable interrupts */
-        setENTRYHI((getENTRYHI() & VPN_MASK) | (asid << ASID_SHIFT));
         printer->d_command = PRINTCHR;
         SYSCALL(WAITIO, PRNTINT, lineNum, 0);
         setSTATUS(getSTATUS() | IECON); /* re-enable interrupts */
@@ -238,9 +237,10 @@ void supWriteToTerminal()
     for (i = 0; i < len; i++)
     {
         setSTATUS(getSTATUS() & ~IECON);
-        setENTRYHI((getENTRYHI() & VPN_MASK) | (asid << ASID_SHIFT));
+        debug(i, -1);
         terminal->t_transm_command = (buffer[i] << 8) | TRANSMITCHAR;
         SYSCALL(WAITIO, TERMINT, lineNum, TRANSMIT);
+        debug((int)terminal->t_transm_status, -2);
         setSTATUS(getSTATUS() | IECON);             
 
         if ((terminal->t_transm_status & STATUS_MASK) != 5)
@@ -293,7 +293,6 @@ void supReadTerminal()
     do
     {
         setSTATUS(getSTATUS() & ~IECON);
-        setENTRYHI((getENTRYHI() & VPN_MASK) | (asid << ASID_SHIFT));
         terminal->t_recv_command = RECEIVECHAR;
         SYSCALL(WAITIO, TERMINT, lineNum, RECEIVE);
         setSTATUS(getSTATUS() | IECON);

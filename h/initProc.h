@@ -10,6 +10,8 @@ extern support_t *supportFreeList;                     /* Free list of support s
 /* Initializes the Page Table for a given U-proc */
 extern void initPageTable(support_t *supportStruct);
 
+extern void test();
+
 extern void initUProcs();
 
 support_t *allocSupportStruct();

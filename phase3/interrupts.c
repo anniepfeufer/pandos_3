@@ -161,7 +161,7 @@ void handleDeviceInterrupt(int intLine)
     if (intLine == TERMINT)
     {
         /* Terminal devices have two sub-devices (Receiver and Transmitter) */
-        int isTransmitter = (status & 0xFF) ? 0 : 1; /* 0 for Transmitter, 1 for Receiver */
+        int isTransmitter = (status & 0xFF) ? 1 : 0; /* 0 for Transmitter, 1 for Receiver */
         deviceIndex = (4 * DEVPERINT) + (devNum * 2) + isTransmitter;
     }
     else
