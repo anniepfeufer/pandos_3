@@ -165,6 +165,7 @@ void supWriteToPrinter()
 
     /* Mutual exclusion */
     SYSCALL(PASSEREN, (int)&printerSem[lineNum], 0, 0);
+    int status;
     
     for (i = 0; i < len; i++)
     {
@@ -173,11 +174,11 @@ void supWriteToPrinter()
         /* Atomically COMMAND + SYS5 */
         setSTATUS(getSTATUS() & ~IECON); /* disable interrupts */
         printer->d_command = PRINTCHR;
-        SYSCALL(WAITIO, PRNTINT, lineNum, 0);
+        status = SYSCALL(WAITIO, PRNTINT, lineNum, 0);
         setSTATUS(getSTATUS() | IECON); /* re-enable interrupts */
 
         /* Check for success: status should be 1 (Device Ready) */
-        if ((printer->d_status & STATUS_MASK) != 1)
+        if ((status & STATUS_MASK) != 1)
         {
             break; /* stop if error occurs */
         }
@@ -185,9 +186,13 @@ void supWriteToPrinter()
         charsPrinted++;
     }
 
+    state->s_v0 = charsPrinted;
+
     SYSCALL(VERHOGEN, (int)&printerSem[lineNum], 0, 0);
 
-    state->s_v0 = charsPrinted;
+    debug(-1,-1);
+
+    LDST(state);
 }
 
 /**
@@ -211,8 +216,6 @@ void supWriteToTerminal()
     char *virtAddr = (char *)state->s_a1;
     int len = state->s_a2;
 
-    debug(len, 100);
-
     /* Validate len and address range */
     if (len <= 0 || len > MAX_LEN || (memaddr)virtAddr < KUSEG)
     {
@@ -234,16 +237,15 @@ void supWriteToTerminal()
     SYSCALL(PASSEREN, (int)&termWriteSem[lineNum], 0, 0);
 
     int sent = 0;
+    int status;
     for (i = 0; i < len; i++)
     {
         setSTATUS(getSTATUS() & ~IECON);
-        debug(i, -1);
         terminal->t_transm_command = (buffer[i] << 8) | TRANSMITCHAR;
-        SYSCALL(WAITIO, TERMINT, lineNum, TRANSMIT);
-        debug((int)terminal->t_transm_status, -2);
+        status = SYSCALL(WAITIO, TERMINT, lineNum, TRANSMIT);
         setSTATUS(getSTATUS() | IECON);             
 
-        if ((terminal->t_transm_status & STATUS_MASK) != 5)
+        if ((status & STATUS_MASK) != 5)
         {
             break;
         }
@@ -251,8 +253,14 @@ void supWriteToTerminal()
         sent++;
     }
 
+    debug(len, sent);
+    
     SYSCALL(VERHOGEN, (int)&termWriteSem[lineNum], 0, 0);
+
     state->s_v0 = sent;
+
+    LDST(state);
+
 }
 
 /**
@@ -287,6 +295,7 @@ void supReadTerminal()
     char buffer[129];
     int count = 0;
     char ch;
+    int status;
 
     SYSCALL(PASSEREN, (int)&termReadSem[lineNum], 0, 0);
 
@@ -294,10 +303,10 @@ void supReadTerminal()
     {
         setSTATUS(getSTATUS() & ~IECON);
         terminal->t_recv_command = RECEIVECHAR;
-        SYSCALL(WAITIO, TERMINT, lineNum, RECEIVE);
+        status = SYSCALL(WAITIO, TERMINT, lineNum, RECEIVE);
         setSTATUS(getSTATUS() | IECON);
 
-        ch = (terminal->t_recv_status >> 8) & STATUS_MASK;
+        ch = (status >> 8) & STATUS_MASK;
 
         buffer[count++] = ch;
     } while (ch != '\n' && count < MAX_LEN);
@@ -313,6 +322,8 @@ void supReadTerminal()
     SYSCALL(VERHOGEN, (int)&termReadSem[lineNum], 0, 0);
 
     state->s_v0 = count;
+
+    LDST(state);
 }
 
 /**
