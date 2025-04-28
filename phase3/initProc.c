@@ -72,12 +72,21 @@ void debug(int a, int b)
     i = a + b;
 }
 
+void debug_top(int i, int k)
+{
+    int foo = 42;
+}
+
+void debug_bottom(int i) {}
+
 void initUProcs()
 {
-    int i;
+    int i, j;
 
-    for (i = 1; i <= UPROCMAX; i++)
+    for (j = 0; j < UPROCMAX; j++)
     {
+        i = j + 1;
+        debug_top(i, j);
         pcb_t *newProc = allocPcb();
         if (newProc == NULL)
         {
@@ -119,7 +128,7 @@ void initUProcs()
         newProc->p_s.s_pc = UPROC_START;
         newProc->p_s.s_t9 = UPROC_START;
         newProc->p_s.s_sp = UPROC_STACK;
-        newProc->p_s.s_status = ALLOFF | IEPBITON | IM | TEBITON; /* user mode with timer */
+        newProc->p_s.s_status = ALLOFF | IEPBITON | IM | TEBITON | KUPBITON; /* user mode with timer */
         newProc->p_s.s_entryHI = newProc->p_s.s_entryHI | (i << ASID_SHIFT);
 
         /* ------------ Launch U-proc using SYS1 ------------ */
@@ -128,6 +137,7 @@ void initUProcs()
         {
             PANIC(); /* SYS1 failed to create the U-proc */
         }
+        debug_bottom(i);
     }
 }
 
