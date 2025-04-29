@@ -72,21 +72,17 @@ void debug(int a, int b)
     i = a + b;
 }
 
-void debug_top(int i, int k)
-{
-    int foo = 42;
-}
+void debug_top(int i){}
 
 void debug_bottom(int i) {}
 
 void initUProcs()
 {
-    int i, j;
+    int i;
 
-    for (j = 0; j < UPROCMAX; j++)
+    for (i = 1; i <= UPROCMAX; i++)
     {
-        i = j + 1;
-        debug_top(i, j);
+        debug_top(i);
         pcb_t *newProc = allocPcb();
         if (newProc == NULL)
         {
@@ -131,12 +127,6 @@ void initUProcs()
         newProc->p_s.s_status = ALLOFF | IEPBITON | IM | TEBITON | KUPBITON; /* user mode with timer */
         newProc->p_s.s_entryHI = newProc->p_s.s_entryHI | (i << ASID_SHIFT);
 
-        /* ------------ Launch U-proc using SYS1 ------------ */
-        int result = SYSCALL(CREATEPROCESS, (int)&(newProc->p_s), (int)support, 0);
-        if (result < 0)
-        {
-            PANIC(); /* SYS1 failed to create the U-proc */
-        }
         debug_bottom(i);
     }
 }
@@ -183,6 +173,17 @@ void initSupportStructs()
 
 void test()
 {
+
+    /* ------------ Launch U-proc using SYS1 ------------ */
+    int i;
+    for (i = 1; i <= UPROCMAX; i++)
+    {
+        int result = SYSCALL(CREATEPROCESS, (int)&(asidProcessTable[i]->p_s), (int)(asidProcessTable[i]->p_supportStruct), 0);
+        if (result < 0)
+        {
+            PANIC();
+        }
+    }
     /* PHASE 3: test() waits for all U-procs to terminate */
 
     int i;
