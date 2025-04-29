@@ -139,15 +139,17 @@ void handleDeviceInterrupt(int intLine)
 
     if (intLine == TERMINT)
     {
-        if (deviceReg->t_transm_status & 0xFF) /* If low byte is non-zero, it's a Transmitter interrupt */
+        if ((deviceReg->t_transm_status & STATUS_MASK) == 5)
         {
+
             status = deviceReg->t_transm_status;
-            deviceReg->t_transm_command = ACK; /* Acknowledge Transmitter */
+            deviceReg->t_transm_command = ACK;
         }
-        else /* Otherwise, it's a Receiver interrupt */
+        else if ((deviceReg->t_recv_status & STATUS_MASK) == 5)
         {
+
             status = deviceReg->t_recv_status;
-            deviceReg->t_recv_command = ACK; /* Acknowledge Receiver */
+            deviceReg->t_recv_command = ACK;
         }
     }
     else

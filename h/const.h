@@ -167,7 +167,7 @@
 #define TRANSMITCHAR 2
 #define RECEIVECHAR 2
 #define TRANSMIT 1
-#define RECEIVE 0
+#define RECEIVE 1
 #define IL_PRINTER (PRNTINT - 3)
 #define IL_TERMINAL (TERMINT - 3)
 
