@@ -186,8 +186,8 @@ void test()
     }
     /* PHASE 3: test() waits for all U-procs to terminate */
 
-    int i;
-    for (i = 0; i < UPROCMAX; i++)
+    int j;
+    for (j = 1; j <= UPROCMAX; j++)
     {
         SYSCALL(PASSEREN, (int)&masterSemaphore, 0, 0); /* SYS3: wait for signal */
     }
