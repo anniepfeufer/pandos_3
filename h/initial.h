@@ -28,8 +28,6 @@ extern int masterSemaphore;
 extern void main();
 extern void createProcess();
 extern void uTLB_RefillHandler(); 
-extern void initSupportStructs();
-extern void initPhase3Resources();
 
 
 /***************************************************************/

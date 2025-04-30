@@ -1,30 +1,26 @@
 #ifndef SYSSUPPORT_H
 #define SYSSUPPORT_H
 
+/************************* SYSSUPPORT.H **************************
+ *
+ *  Externals declaration file for system call support functions.
+ *
+ *  Declares exception and syscall handlers used by user-level
+ *  processes. Includes support for terminating processes,
+ *  retrieving the time of day, and performing I/O operations
+ *  with printers and terminals through the uMPS3 device interface.
+ *
+ */
+
 #include "../h/types.h"
 
-/* handles all passed-up, nonTLB exceptions */
 extern void supportGenExceptionHandler();
-
-/* handles syscalls 9 and above */
 extern void supportSyscallHandler();
-
-/* handles program traps for u proc */
 extern void supportProgTrapHandler();
-
-/* wrapper for the kernel-mode SYS2 */
 extern void supTerminate();
-
-/* number fo microseconds since last reboot */
 extern void supGetTOD();
-
-/* writes to the printer */
 extern void supWriteToPrinter();
-
-/* writes to the terminal */
 extern void supWriteToTerminal();
-
-/* reads from the terminal */
 extern void supReadTerminal();
 
 #endif

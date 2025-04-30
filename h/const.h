@@ -9,7 +9,6 @@
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
-#define BLOCKSIZE 0x1000 
 #define WORDLEN 4     /* word size in bytes	*/
 
 /* timer, timescale, TOD-LO and other bus regs */
@@ -48,6 +47,7 @@
 #define RESVINSTR 10      /* Reserved Instruction (RI) Exception Code */
 #define CAUSEINTOFFS 10   /* ExcCode field starts at bit 10 */
 #define STATUS_MASK 0xFF  /* For device status low byte */
+#define EXCEPTION_CODE_SHIFT 2
 
 /* device interrupts */
 #define DISKINT 3
@@ -130,7 +130,7 @@
 #define SWAP_POOL_START_FRAME 32
 #define FRAMEPOOL RAMSTART + (SWAP_POOL_START_FRAME * PAGESIZE)
 
-#define UPROCMAX 1
+#define UPROCMAX 8
 #define SUPPORT_STRUCT_POOL_SIZE UPROCMAX
 #define VPNSHIFT 12 /* Shift to get VPN from EntryLo */
 
@@ -139,9 +139,9 @@
 #define STACK_PAGE_VPN 0xBFFFF000 /* Top of kuseg for SP */
 
 /* EntryLo bit flags */
-#define ENTRYLO_DIRTY_SHIFT   10/* D = 1 (write-enabled) */
-#define ENTRYLO_VALID_SHIFT   9 /* V = 1 (valid) */
-#define ENTRYLO_GLOBAL_SHIFT  8 /* G = 1 (global) */
+#define ENTRYLO_DIRTY (1 << 10)
+#define ENTRYLO_VALID (1 << 9)
+#define ENTRYLO_GLOBAL (1 << 8)
 
 #define ASID_SHIFT 6        /* ASID bits [11:6] in EntryHi */
 #define VPN_MASK 0xFFFFF000 /* Top 20 bits for VPN */
@@ -152,10 +152,9 @@
 
 #define READBLK 2
 #define WRITEBLK 3
-#define FLASH_BASE 0x100000d4 /* base of flash devices */
-#define FLASH_SIZE 0x10       /* each device has 16 bytes of registers */
+#define FLASH_BASE 0x100000D4
+#define FLASH_SIZE 0x10 /* each device has 16 bytes of registers */
 #define COMMAND_SHIFT 8
-#define FIRST_INSTR 0x80000
 
 #define UPROC_START 0x800000B0
 #define UPROC_STACK 0xC0000000
@@ -169,9 +168,5 @@
 #define RECEIVECHAR 2
 #define TRANSMIT 1
 #define RECEIVE 1
-#define IL_PRINTER (PRNTINT - 3)
-#define IL_TERMINAL (TERMINT - 3)
-
-
 
 #endif

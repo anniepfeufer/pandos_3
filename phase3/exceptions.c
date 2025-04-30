@@ -451,22 +451,26 @@ void memcopy(void *dest, const void *src, unsigned int n)
 }
 
 /*
- * Handles TLB refill exceptions.
- * It retrieves the page table entry for the faulting process and loads it into the TLB.
- * If the page table entry is not valid, the process is terminated.
+ * This function handles TLB refill exceptions, which occur when a virtual address
+ * being accessed is not mapped in the TLB. It retrieves the appropriate page table
+ * entry for the faulting VPN using the current process’s support structure and
+ * loads it into the TLB using TLBWR. If the corresponding page table entry is
+ * invalid or out of bounds, the system halts using PANIC(). After the TLB is
+ * updated, the faulting instruction is retried using LDST.
  */
 void uTLB_RefillHandler()
 {
     state_t *savedState = (state_t *)BIOSDATAPAGE; /* Get the saved exception state */
 
     unsigned int entryHi = savedState->s_entryHI; /* Get the EntryHI value */
-    int vpn = entryHi >> VPNSHIFT;                /* Extract VPN (upper 20 bits) */
 
-    /* Get current process’s support structure */
+    int vpn = (entryHi & VPN_MASK) >> VPNSHIFT;
+
+    /* Get current process’s support structure and ASID */
     support_t *support = (support_t *)currentProcess->p_supportStruct;
 
-    /* Page index = vpn - (VPN_BASE >> VPNSHIFT) */
     int pageIndex;
+    /* Check if it's the stack page */
     if ((vpn << VPNSHIFT) == STACK_PAGE_VPN)
     {
         pageIndex = STACK_PAGE_INDEX;
@@ -475,7 +479,8 @@ void uTLB_RefillHandler()
     {
         pageIndex = vpn - (VPN_BASE >> VPNSHIFT);
     }
-    
+
+    /* Sanity check: invalid page index */
     if (pageIndex < 0 || pageIndex >= PAGE_TABLE_SIZE)
     {
         PANIC(); /* Safety check */
