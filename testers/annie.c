@@ -35,20 +35,20 @@ void main() {
     i=0;
     for( i = 0; i < status-1; i++ )
 	{
-        if ((buf[i]+buf1[i]) < 127)
+        if ((((int)buf[i]+ (int)buf1[i]) - 0x61 ) < 0x7E)
 		{
-            buf2[i] = buf[i]+buf1[i];
+            buf2[i] = (char)(((int)buf[i]+ (int)buf1[i]) - 0x61 );
         }else
         {
-            buf2[i]= 0;
+            buf2[i]= (char)0x52;
         }
         
 	}
 
 	print(WRITETERMINAL, &buf[0]);
-    print(WRITETERMINAL, " plus ");
+    print(WRITETERMINAL, "plus\n");
     print(WRITETERMINAL, &buf1[0]);
-    print(WRITETERMINAL, " equals ");
+    print(WRITETERMINAL, "equals\n");
     print(WRITETERMINAL, &buf2[0]);
 
 
