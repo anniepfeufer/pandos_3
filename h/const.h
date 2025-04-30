@@ -38,6 +38,7 @@
 #define ALLOFF 0x0           /* Disable all bits */
 #define IM 0x0000FF00        /* Interrupt Mask (bits 8-15) */
 #define IECON 0x1            /* Current Interrupt Enable bit (bit 0) */
+#define TIMEROFF 0xFFFFFCFF  /* timer interrupts disabled */
 
 #define RAMTOP (*(unsigned int *)RAMBASEADDR + *(unsigned int *)RAMBASESIZE)
 
@@ -129,7 +130,7 @@
 #define SWAP_POOL_START_FRAME 32
 #define FRAMEPOOL RAMSTART + (SWAP_POOL_START_FRAME * PAGESIZE)
 
-#define UPROCMAX 2
+#define UPROCMAX 1
 #define SUPPORT_STRUCT_POOL_SIZE UPROCMAX
 #define VPNSHIFT 12 /* Shift to get VPN from EntryLo */
 
