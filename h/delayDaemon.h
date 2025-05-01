@@ -15,6 +15,9 @@
 
 #include "../h/types.h"
 
+extern int delaySem[UPROCMAX + 1];                        /* Maps ASID (1–8) to U-proc delay semaphore; index 0 unused */
+extern int ADLsem;
+
 extern void supDelay(int secCnt);
 extern void delayDaemon();
 extern void initADL();

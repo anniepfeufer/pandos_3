@@ -24,6 +24,8 @@
 #include "../h/vmSupport.h"
 
 
+int delaySem[UPROCMAX + 1];                        /* Maps ASID (1–8) to U-proc delay semaphore; index 0 unused */
+int ADLsem;
 
 /**
  * implements the SYS18 function, which allocates a delay_event

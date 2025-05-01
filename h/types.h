@@ -163,4 +163,12 @@ typedef struct
 	int occupied; /* Whether the slot is in use */
 } swapPoolEntry_t;
 
+/* Delay event descriptor type */
+typedef struct
+{
+	struct delayed_t *d_next;   /* Pointer to next semaphore in ADL */
+	int d_wakeTime;             /* time of day the uProc should be woken up */
+	support_t *d_supStruct;     /* pointer to the sup structure denoting uProcs identiy */
+}delayed_t;
+
 #endif
