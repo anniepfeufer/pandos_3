@@ -23,6 +23,7 @@
 #include "../h/initial.h"
 #include "../h/initProc.h"
 #include "../h/vmSupport.h"
+#include "../h/delayDaemon.h"
 
 /*
  * This function is called when a general exception occurs in a user process.

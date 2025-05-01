@@ -18,6 +18,7 @@
 #include "../h/initProc.h"
 #include "../h/vmSupport.h"
 #include "../h/sysSupport.h"
+#include "../h/delayDaemon.h"
 
 /* Global Variables */
 int processCount = 0;                        /* Active process count */
