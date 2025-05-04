@@ -107,6 +107,7 @@ void initUProcs()
 
         newProc->p_supportStruct = support; /* Link support struct to process */
         support->sup_asid = i;              /* Assign ASID to the process */
+        support->sup_privateSem = 0;        /* Initialize private semaphore to 0 so SYS3 blocks */
 
         /* Initialize page table for the new U-proc */
         initPageTable(support);
@@ -177,6 +178,8 @@ void initPhase3Resources()
         termReadSem[i] = 1;
         termWriteSem[i] = 1;
     }
+
+    initADL(); /* Set up delay daemon process */
 }
 
 /*

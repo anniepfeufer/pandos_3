@@ -121,6 +121,7 @@ typedef struct support_t
 	context_t sup_exceptContext[2];					 /* Pass up contexts */
 	pageTableEntry_t sup_pageTable[PAGE_TABLE_SIZE]; /* U-proc Page Table */
 	struct support_t *sup_next;						 /* Pointer to next support structure in linked list */
+	int sup_privateSem;								 /* Semaphore used to delay this U-proc during SYS18 */
 } support_t;
 
 /* Process Control Block Type */
@@ -164,11 +165,11 @@ typedef struct
 } swapPoolEntry_t;
 
 /* Delay event descriptor type */
-typedef struct
+typedef struct delayd_t
 {
-	struct delayed_t *d_next;   /* Pointer to next semaphore in ADL */
-	int d_wakeTime;             /* time of day the uProc should be woken up */
-	support_t *d_supStruct;     /* pointer to the sup structure denoting uProcs identiy */
-}delayed_t;
+	struct delayd_t *d_next; /* Pointer to next semaphore in ADL */
+	int d_wakeTime;			 /* time of day the uProc should be woken up */
+	support_t *d_supStruct;	 /* pointer to the sup structure denoting uProcs identiy */
+} delayd_t;
 
 #endif

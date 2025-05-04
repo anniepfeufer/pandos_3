@@ -99,6 +99,9 @@ void supportSyscallHandler(state_t *exceptionState)
         /* Read string from terminal */
         supReadTerminal();
         break;
+    case DELAY:
+        supDelay(exceptionState->s_a1);
+        break;
     default:
         /* Invalid syscall, terminate the process */
         supTerminate();

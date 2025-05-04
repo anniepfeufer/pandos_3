@@ -28,6 +28,7 @@
 #define MAXPROC 20        /* Maximum number of concurrent processes */
 #define MAXINT 0x7FFFFFFF /* Maximum positive integer for 32-bit systems */
 #define CLOCKINTERVAL 100000UL
+#define SECOND 1000000
 
 /* Status Register Bit Masks */
 #define IEPBITON 0x4         /* Previous Interrupt Enable (bit 2) */
@@ -124,6 +125,7 @@
 #define WRITEPRINTER 11
 #define WRITETERMINAL 12
 #define READTERMINAL 13
+#define DELAY 18
 
 #define PAGE_TABLE_SIZE 32
 #define SWAP_POOL_SIZE 16

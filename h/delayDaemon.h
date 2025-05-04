@@ -15,12 +15,19 @@
 
 #include "../h/types.h"
 
-extern int delaySem[UPROCMAX + 1];                        /* Maps ASID (1–8) to U-proc delay semaphore; index 0 unused */
 extern int ADLsem;
 
 extern void supDelay(int secCnt);
 extern void delayDaemon();
 extern void initADL();
 
+#define DELAY_LIST_SIZE UPROCMAX
+
+/* Active Delay List and Free List heads */
+extern delayd_t *delayd_h;
+extern delayd_t *delaydFree_h;
+
+/* Delay descriptor pool */
+extern delayd_t delaydTable[DELAY_LIST_SIZE];
 
 #endif
