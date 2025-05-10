@@ -1,16 +1,15 @@
 /************************* delayDaemon.c *****************************
  *
- *  The externals declaration file for the DelayDaemon
- *  module.
+ *  WRITTEN BY HARIS AND ANNIE
  *
- *  Implements the delay facility function which maintains the list of
- *  sleeping processes on a singly linked list as well as the Delay 
- *  Daemon, which is an infinite loop of waiting for clock, and checking 
- *  if any uProcs should be woken up. The Delay Daemon will run in 
- *  kernel-mode using the kernel ASID value (zero) with all interrupts enabled.
- *  also implements the function for SYS18
+ *  This file implements the delay facility for SYS18, allowing user processes to sleep for a specified time.
+ *  Uses a statically allocated array of delay descriptors managed through a free list and a singly
+ *  linked Active Delay List (ADL), which ends with a dummy tail node for simpler traversal and insertion.
+ *  A kernel-mode Delay Daemon (ASID 0) runs in an infinite loop, waking every 100ms via SYS7 to check
+ *  for expired delays. It wakes processes by performing a V on their private semaphores and recycles
+ *  their descriptors back to the free list.
  *
-*****************************************************************/
+ *****************************************************************/
 
 #include "../h/delayDaemon.h"
 #include "../h/sysSupport.h"
@@ -23,20 +22,21 @@
 #include "../h/initProc.h"
 #include "../h/vmSupport.h"
 
-int delaySem[UPROCMAX + 1];            /* Maps ASID (1–8) to U-proc delay semaphore; index 0 unused */
-int ADLsem = 1;                        /* Semaphore for mutual exclusion over the Active Delay List */
+int ADLsem = 1;                        /* Semaphore for mutual exclusion over the ADL */
 delayd_t delaydTable[DELAY_LIST_SIZE]; /* Static pool of descriptors */
-delayd_t *delayd_h = NULL;             /* Head of Active Delay List (ADL) */
+delayd_t *delayd_h = NULL;             /* Head of ADL */
 delayd_t *delaydFree_h = NULL;         /* Head of Free List */
 
 /**
- * implements the SYS18 function, which allocates a delay_event
- * node, and blocks the uProc on a private semaphore
+ * Implements the SYS18 Delay system call.
+ * Validates the delay duration, allocates a delay descriptor from the free list,
+ * and inserts the calling U-proc into the ADL, ordered by wake time.
+ * The U-proc is then blocked on its private semaphore and resumed later by the delay daemon.
  */
 void supDelay(int secCnt)
 {
-    support_t *support = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);
-    state_t *state = &support->sup_exceptState[GENERALEXCEPT];
+    support_t *support = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0); /* Get support struct for current process */
+    state_t *state = &support->sup_exceptState[GENERALEXCEPT];         /* Access saved state at exception time */
 
     /* Step 1: Check that time is non-negative */
     if (secCnt < 0)
@@ -60,14 +60,13 @@ void supDelay(int secCnt)
 
     /* Set wake time */
     cpu_t currTime;
-    STCK(currTime);
-    node->d_wakeTime = currTime + (secCnt * SECOND); /* SECOND = 1000000 */
-
-    node->d_supStruct = support;
+    STCK(currTime);                                  /* Get current time */
+    node->d_wakeTime = currTime + (secCnt * SECOND); /* Compute when process should resume */
+    node->d_supStruct = support;                     /* Link this node to the current process */
 
     /* Insert into Active Delay List (sorted by wakeTime) */
     delayd_t **ptr = &delayd_h;
-    while (*ptr != NULL && (*ptr)->d_wakeTime <= node->d_wakeTime)
+    while ((*ptr)->d_wakeTime < node->d_wakeTime)
     {
         ptr = &(*ptr)->d_next;
     }
@@ -83,8 +82,10 @@ void supDelay(int secCnt)
 }
 
 /**
- * the infinite loop of the delayDaemon: executes a wait for clock,
- * and checks if it is time to wake any sleeping processes.
+ * Main loop for the Delay Daemon process.
+ * Waits for pseudo-clock tick events, then checks the ADL.
+ * If any processes have expired delay times, it wakes them by performing a V on their private semaphores,
+ * and returns their delay descriptor to the free list.
  */
 void delayDaemon()
 {
@@ -103,12 +104,13 @@ void delayDaemon()
         delayd_t *prev = NULL;
         delayd_t *curr = delayd_h;
 
-        while (curr != NULL && curr->d_wakeTime <= currTime)
+        /* Traverse the ADL and process expired delay nodes */
+        while (curr != NULL && curr->d_supStruct != NULL && curr->d_wakeTime <= currTime)
         {
             /* Wake the U-proc by V on its private semaphore */
             SYSCALL(VERHOGEN, (int)&(curr->d_supStruct->sup_privateSem), 0, 0); /* SYS4 */
 
-            /* Step 3b: Remove from ADL and return to free list */
+            /* Remove from ADL and return to free list */
             delayd_t *expired = curr;
             curr = curr->d_next;
 
@@ -132,21 +134,34 @@ void delayDaemon()
 }
 
 /**
- * called by the instantiator process, initializes the list
- * of active delays.
+ * Initializes the ADL and the delay descriptor free list.
+ * All usable delay descriptors (except the last) are added to the free list.
+ * The final descriptor in the static pool is reserved as a dummy tail node
+ * and placed at the end of the ADL to simplify insertion and traversal logic.
+ * Also creates and launches the Delay Daemon process, which runs in kernel mode
+ * (ASID 0) with full interrupt privileges, and is responsible for waking
+ * delayed U-procs based on their scheduled wake times.
  */
 void initADL()
 {
     /* Step 1: Move all nodes to delayFree list */
-    delayd_h = NULL; /* ADL initially empty (no dummy) */
+    delayd_h = NULL;
     delaydFree_h = NULL;
 
     int i;
-    for (i = 0; i < DELAY_LIST_SIZE; i++)
+    /* Last node is reserved for dummy tail */
+    for (i = 0; i < DELAY_LIST_SIZE - 1; i++)
     {
         delaydTable[i].d_next = delaydFree_h;
         delaydFree_h = &delaydTable[i];
     }
+
+    /* Set up dummy tail node */
+    delayd_t *dummy = &delaydTable[DELAY_LIST_SIZE - 1];
+    dummy->d_wakeTime = MAXINT; /* Will never expire */
+    dummy->d_next = NULL;
+    dummy->d_supStruct = NULL;
+    delayd_h = dummy; /* Start ADL with dummy tail */
 
     /* Step 2: Launch Delay Daemon */
 

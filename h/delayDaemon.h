@@ -1,5 +1,5 @@
-#ifndef DELAYFDAEMON
-#define DELAYFDAEMON
+#ifndef DELAYDAEMON_H
+#define DELAYDAEMON_H
 
 /************************* DELAYFDAEMON.H *****************************
  *
@@ -11,7 +11,7 @@
  *  loop of waiting for clock, and checking if any uProcs should be
  *  woken up.
  *
-*/
+ */
 
 #include "../h/types.h"
 
@@ -21,7 +21,7 @@ extern void supDelay(int secCnt);
 extern void delayDaemon();
 extern void initADL();
 
-#define DELAY_LIST_SIZE UPROCMAX
+#define DELAY_LIST_SIZE (UPROCMAX + 1) /* 1 extra for dummy tail */
 
 /* Active Delay List and Free List heads */
 extern delayd_t *delayd_h;

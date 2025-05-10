@@ -2,12 +2,17 @@
  *
  *  WRITTEN BY HARIS AND ANNIE
  *
- *  This file implements the delay facility for SYS18, allowing user processes to sleep for a specified time.
- *  Uses a statically allocated array of delay descriptors managed through a free list and a singly
- *  linked Active Delay List (ADL), which ends with a dummy tail node for simpler traversal and insertion.
- *  A kernel-mode Delay Daemon (ASID 0) runs in an infinite loop, waking every 100ms via SYS7 to check
- *  for expired delays. It wakes processes by performing a V on their private semaphores and recycles
- *  their descriptors back to the free list.
+ *  This file implements Phase 4 support for uMPS3 disk device DMA operations,
+ *  including the synchronous disk read (SYS15) and write (SYS14) services.
+ *
+ *  These services allow user processes to read from or write to disk
+ *  sectors by copying data between user space and kernel-reserved DMA
+ *  memory buffers. Each operation translates logical block numbers into
+ *  (cylinder, head, sector) format and interacts with the disk via SEEKCYL
+ *  and READBLK/WRITEBLK commands, waiting for I/O completion.
+ *
+ *  Invalid addresses, out-of-range disk sectors, or device errors result
+ *  in the termination of the requesting process.
  *
  *****************************************************************/
 
@@ -23,6 +28,18 @@
 #include "../h/initProc.h"
 #include "../h/vmSupport.h"
 
+/**
+ * Performs a synchronous disk write operation (SYS14).
+ * This function copies a 4KB buffer from the user process into a
+ * kernel-reserved DMA memory frame, then issues a SEEKCYL followed by a
+ * WRITEBLK command to the disk device. It waits for each I/O operation
+ * to complete before proceeding. If the write fails or the parameters are
+ * invalid, the process is terminated.
+ *
+ * @param diskNum  Disk number (0–7)
+ * @param blockNum Logical 4KB block to write to (converted into cyl/head/sect)
+ * @param srcAddr  Address in U-proc memory of the 4KB buffer to write
+ */
 void dmaWriteDisk(int diskNum, int blockNum, memaddr srcAddr)
 {
     support_t *support = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);
@@ -31,26 +48,26 @@ void dmaWriteDisk(int diskNum, int blockNum, memaddr srcAddr)
     if (diskNum < 0 || diskNum >= 8)
         supTerminate(); /* Invalid disk number */
 
-    /* Step 1: Resolve addresses */
+    /* Resolve addresses */
     memaddr dmaAddr = RAMSTART + (DMA_DISK_START_FRAME + diskNum) * DMA_FRAME_SIZE;
 
-    /* Step 2: Copy data from user space to DMA buffer */
+    /* Copy data from user space to DMA buffer */
     char *from = (char *)srcAddr;
     char *to = (char *)dmaAddr;
     int i;
     for (i = 0; i < DISK_SECTOR_SIZE; i++)
         to[i] = from[i];
 
-    /* Step 3: Resolve device register */
+    /* Resolve device register */
     device_t *disk = (device_t *)DEV_REG_ADDR(DISKINT, diskNum);
 
-    /* Step 4: Extract disk geometry from DATA1 */
+    /* Extract disk geometry from DATA1 */
     unsigned int geometry = disk->d_data1;
     int maxCyl = (geometry >> 16) & 0xFFFF;
     int maxHead = (geometry >> 8) & 0xFF;
     int maxSect = geometry & 0xFF;
 
-    /* Step 5: Compute physical (cyl, head, sect) */
+    /* Compute physical (cyl, head, sect) */
     int cyl = blockNum / (maxHead * maxSect);
     int rem = blockNum % (maxHead * maxSect);
     int head = rem / maxSect;
@@ -59,16 +76,16 @@ void dmaWriteDisk(int diskNum, int blockNum, memaddr srcAddr)
     if (cyl >= maxCyl || head >= maxHead || sect >= maxSect)
         supTerminate(); /* Out-of-bounds block number */
 
-    /* Step 6: Write DMA address to DATA0 */
+    /* Write DMA address to DATA0 */
     disk->d_data0 = dmaAddr;
 
-    /* Step 7: Issue SEEKCYL command */
+    /* Issue SEEKCYL command */
     disk->d_command = (cyl << 8) | SEEKCYL;
     int status = SYSCALL(WAITIO, DISKINT, diskNum, 0);
     if (status != DEVICE_READY)
         supTerminate();
 
-    /* Step 8: Issue WRITEBLK command */
+    /* Issue WRITEBLK command */
     disk->d_command = (head << 24) | (sect << 16) | WRITEBLK;
     status = SYSCALL(WAITIO, DISKINT, diskNum, 0);
     if ((status & STATUS_MASK) != DEVICE_READY)
@@ -80,6 +97,21 @@ void dmaWriteDisk(int diskNum, int blockNum, memaddr srcAddr)
     LDST(state);
 }
 
+/**
+ * Performs a synchronous disk read operation (SYS15).
+ * This function reads a 4KB block from the specified disk location into
+ * a kernel-reserved DMA buffer, then attempts to copy that data into
+ * the user process’s memory at the specified address. It issues a SEEKCYL
+ * followed by a READBLK command and waits for each to complete using WAITIO.
+ *
+ * The U-proc address must be valid and writable from kernel mode; if it is not,
+ * the copy may silently fail or result in termination depending on uMPS3's memory protection.
+ * If any device error or invalid parameter is encountered, the process is terminated.
+ *
+ * @param diskNum  Disk number (0–7)
+ * @param blockNum Logical 4KB block to read from (converted into cyl/head/sect)
+ * @param destAddr Address in U-proc memory where the data will be copied
+ */
 void dmaReadDisk(int diskNum, int blockNum, memaddr destAddr)
 {
     support_t *support = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);
@@ -88,19 +120,19 @@ void dmaReadDisk(int diskNum, int blockNum, memaddr destAddr)
     if (diskNum < 0 || diskNum >= 8)
         supTerminate(); /* Invalid disk number */
 
-    /* Step 1: Resolve DMA buffer address */
+    /* Resolve DMA buffer address */
     memaddr dmaAddr = RAMSTART + (DMA_DISK_START_FRAME + diskNum) * DMA_FRAME_SIZE;
 
-    /* Step 2: Get device register */
+    /* Get device register */
     device_t *disk = (device_t *)DEV_REG_ADDR(DISKINT, diskNum);
 
-    /* Step 3: Extract geometry from DATA1 */
+    /* Extract geometry from DATA1 */
     unsigned int geometry = disk->d_data1;
     int maxCyl = (geometry >> 16) & 0xFFFF;
     int maxHead = (geometry >> 8) & 0xFF;
     int maxSect = geometry & 0xFF;
 
-    /* Step 4: Convert blockNum to (cyl, head, sect) */
+    /* Convert blockNum to (cyl, head, sect) */
     int cyl = blockNum / (maxHead * maxSect);
     int rem = blockNum % (maxHead * maxSect);
     int head = rem / maxSect;
@@ -109,16 +141,16 @@ void dmaReadDisk(int diskNum, int blockNum, memaddr destAddr)
     if (cyl >= maxCyl || head >= maxHead || sect >= maxSect)
         supTerminate(); /* Invalid block number */
 
-    /* Step 5: Set DATA0 to DMA buffer address */
+    /* Set DATA0 to DMA buffer address */
     disk->d_data0 = dmaAddr;
 
-    /* Step 6: Seek to correct cylinder */
+    /* Seek to correct cylinder */
     disk->d_command = (cyl << 8) | SEEKCYL;
     int status = SYSCALL(WAITIO, DISKINT, diskNum, 0);
     if (status != DEVICE_READY)
         supTerminate();
 
-    /* Step 7: Issue READBLK from (head, sect) */
+    /* Issue READBLK from (head, sect) */
     disk->d_command = (head << 24) | (sect << 16) | READBLK;
     status = SYSCALL(WAITIO, DISKINT, diskNum, 0);
     if ((status & STATUS_MASK) != DEVICE_READY)
@@ -127,7 +159,7 @@ void dmaReadDisk(int diskNum, int blockNum, memaddr destAddr)
         LDST(state);
     }
 
-    /* Step 8: Copy data from DMA buffer to U-proc address */
+    /* Copy data from DMA buffer to U-proc address */
     char *from = (char *)dmaAddr;
     char *to = (char *)destAddr;
     int i;

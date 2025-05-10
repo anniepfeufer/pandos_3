@@ -3,13 +3,11 @@
 
 /************************* deviceSupportDMA.H *****************************
  *
- *  The externals declaration file for the DelayDaemon
- *  module.
  *
- *  Implements the delay facility function which maintains the list of
- *  sleeping processes, as well as the Delay Daemon, which is an infinite
- *  loop of waiting for clock, and checking if any uProcs should be
- *  woken up.
+ *  External declarations and constants for Phase 4 DMA-based disk I/O
+ *  support. This header defines the interface for SYS14 (disk write) and
+ *  SYS15 (disk read) services used by user-level processes to perform
+ *  sector-based synchronous I/O via uMPS3 disk devices.
  *
  */
 
