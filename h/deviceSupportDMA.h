@@ -15,5 +15,7 @@
 
 extern void dmaReadDisk(int diskNum, int blockNum, memaddr destAddr);
 extern void dmaWriteDisk(int diskNum, int blockNum, memaddr srcAddr);
+extern void dmaReadFlash(int flashNum, int blockNum, memaddr destAddr);
+extern void dmaWriteFlash(int flashNum, int blockNum, memaddr srcAddr);
 
 #endif

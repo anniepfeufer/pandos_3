@@ -108,6 +108,14 @@ void supportSyscallHandler(state_t *exceptionState)
         dmaWriteDisk(exceptionState->s_a2, exceptionState->s_a3, exceptionState->s_a1);
         exceptionState->s_v0 = DEVICE_READY;
         break;
+    case FLASH_GET:
+        dmaReadFlash(exceptionState->s_a2, exceptionState->s_a3, exceptionState->s_a1);
+        exceptionState->s_v0 = DEVICE_READY;
+        break;
+    case FLASH_PUT:
+        dmaWriteFlash(exceptionState->s_a2, exceptionState->s_a3, exceptionState->s_a1);
+        exceptionState->s_v0 = DEVICE_READY;
+        break;
     case DELAY:
         supDelay(exceptionState->s_a1);
         break;
