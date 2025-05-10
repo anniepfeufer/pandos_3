@@ -24,6 +24,7 @@
 #include "../h/initProc.h"
 #include "../h/vmSupport.h"
 #include "../h/delayDaemon.h"
+#include "../h/deviceSupportDMA.h"
 
 /*
  * This function is called when a general exception occurs in a user process.
@@ -98,6 +99,14 @@ void supportSyscallHandler(state_t *exceptionState)
     case READTERMINAL:
         /* Read string from terminal */
         supReadTerminal();
+        break;
+    case DISK_GET:
+        dmaReadDisk(exceptionState->s_a2, exceptionState->s_a3, exceptionState->s_a1);
+        exceptionState->s_v0 = DEVICE_READY;
+        break;
+    case DISK_PUT:
+        dmaWriteDisk(exceptionState->s_a2, exceptionState->s_a3, exceptionState->s_a1);
+        exceptionState->s_v0 = DEVICE_READY;
         break;
     case DELAY:
         supDelay(exceptionState->s_a1);

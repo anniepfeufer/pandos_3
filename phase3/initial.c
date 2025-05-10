@@ -19,6 +19,7 @@
 #include "../h/vmSupport.h"
 #include "../h/sysSupport.h"
 #include "../h/delayDaemon.h"
+#include "../h/deviceSupportDMA.h"
 
 /* Global Variables */
 int processCount = 0;                        /* Active process count */

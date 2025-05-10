@@ -24,6 +24,7 @@
 #include "../h/vmSupport.h"
 #include "../h/sysSupport.h"
 #include "../h/delayDaemon.h"
+#include "../h/deviceSupportDMA.h"
 
 pcb_PTR asidProcessTable[UPROCMAX + 1];                /* Maps ASID (1–8) to U-proc PCB; index 0 unused */
 int printerSem[8];                                     /* One binary semaphore per printer line */
