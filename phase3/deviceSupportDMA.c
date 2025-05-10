@@ -25,6 +25,8 @@
 
 void dmaWriteDisk(int diskNum, int blockNum, memaddr srcAddr)
 {
+    support_t *support = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);
+    state_t *state = &support->sup_exceptState[GENERALEXCEPT];
 
     if (diskNum < 0 || diskNum >= 8)
         supTerminate(); /* Invalid disk number */
@@ -69,12 +71,20 @@ void dmaWriteDisk(int diskNum, int blockNum, memaddr srcAddr)
     /* Step 8: Issue WRITEBLK command */
     disk->d_command = (head << 24) | (sect << 16) | WRITEBLK;
     status = SYSCALL(WAITIO, DISKINT, diskNum, 0);
-    if (status != DEVICE_READY)
-        supTerminate();
+    if ((status & STATUS_MASK) != DEVICE_READY)
+    {
+        state->s_v0 = -status;
+        LDST(state);
+    }
+    state->s_v0 = DEVICE_READY;
+    LDST(state);
 }
 
 void dmaReadDisk(int diskNum, int blockNum, memaddr destAddr)
 {
+    support_t *support = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);
+    state_t *state = &support->sup_exceptState[GENERALEXCEPT];
+
     if (diskNum < 0 || diskNum >= 8)
         supTerminate(); /* Invalid disk number */
 
@@ -111,8 +121,11 @@ void dmaReadDisk(int diskNum, int blockNum, memaddr destAddr)
     /* Step 7: Issue READBLK from (head, sect) */
     disk->d_command = (head << 24) | (sect << 16) | READBLK;
     status = SYSCALL(WAITIO, DISKINT, diskNum, 0);
-    if (status != DEVICE_READY)
-        supTerminate();
+    if ((status & STATUS_MASK) != DEVICE_READY)
+    {
+        state->s_v0 = -status;
+        LDST(state);
+    }
 
     /* Step 8: Copy data from DMA buffer to U-proc address */
     char *from = (char *)dmaAddr;
@@ -120,4 +133,7 @@ void dmaReadDisk(int diskNum, int blockNum, memaddr destAddr)
     int i;
     for (i = 0; i < DISK_SECTOR_SIZE; i++)
         to[i] = from[i];
+
+    state->s_v0 = DEVICE_READY;
+    LDST(state);
 }
