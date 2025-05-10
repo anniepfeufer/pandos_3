@@ -2,17 +2,13 @@
  *
  *  WRITTEN BY HARIS AND ANNIE
  *
- *  This file implements Phase 4 support for uMPS3 disk device DMA operations,
- *  including the synchronous disk read (SYS15) and write (SYS14) services.
- *
- *  These services allow user processes to read from or write to disk
- *  sectors by copying data between user space and kernel-reserved DMA
- *  memory buffers. Each operation translates logical block numbers into
- *  (cylinder, head, sector) format and interacts with the disk via SEEKCYL
- *  and READBLK/WRITEBLK commands, waiting for I/O completion.
- *
- *  Invalid addresses, out-of-range disk sectors, or device errors result
- *  in the termination of the requesting process.
+ *  This file implements Phase 4 support for uMPS3 disk and flash device DMA operations,
+ *  including synchronous disk read/write (SYS15, SYS14) and flash read/write (SYS16, SYS17).
+ *  These services transfer 4KB blocks between user process memory and kernel-reserved DMA buffers.
+ *  Disk operations involve logical block-to-(cylinder, head, sector) translation, while flash uses
+ *  linear sector addressing. All I/O commands are issued via device registers using SEEKCYL and
+ *  READBLK/WRITEBLK, with completion handled through WAITIO. Invalid addresses, out-of-range sectors,
+ *  or device errors result in termination of the requesting user process.
  *
  *****************************************************************/
 
@@ -234,8 +230,6 @@ void dmaReadFlash(int flashNum, int blockNum, memaddr destAddr)
     LDST(state);
    
 }
-
-
 
 /**
  * Performs a flash write operation (SYS17).
