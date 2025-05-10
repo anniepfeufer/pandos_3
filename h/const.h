@@ -134,6 +134,9 @@
 #define PAGE_TABLE_SIZE 32
 #define SWAP_POOL_SIZE 16
 #define SWAP_POOL_START_FRAME 32
+#define DMA_DISK_START_FRAME 16
+#define DMA_FRAME_SIZE PAGESIZE
+#define DISK_SECTOR_SIZE 4096 /* Each disk sector is 4KB */
 #define FRAMEPOOL RAMSTART + (SWAP_POOL_START_FRAME * PAGESIZE)
 
 #define UPROCMAX 8
@@ -156,6 +159,7 @@
 #define EXC_TLBL 2 /* TLB Invalid (Load/Instruction fetch) */
 #define EXC_TLBS 3 /* TLB Invalid (Store) */
 
+#define SEEKCYL 2
 #define READBLK 2
 #define WRITEBLK 3
 #define FLASH_BASE 0x100000D4
@@ -174,5 +178,6 @@
 #define RECEIVECHAR 2
 #define TRANSMIT 1
 #define RECEIVE 1
+#define DEVICE_READY 1
 
 #endif
